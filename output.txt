@@ -1,0 +1,10 @@
+Model Training Completed. Mean Squared Error: 6.67
+
+--- Rainfall Prediction for Next 7 Days ---
+Day 1: No Rain (0.00mm) | Temp: 20.9C, Hum: 56.1%, Press: 1018.1hPa
+Day 2: Light Rain (1.85mm) | Temp: 21.7C, Hum: 54.6%, Press: 1017.6hPa
+Day 3: Light Rain (3.78mm) | Temp: 21.1C, Hum: 54.3%, Press: 1017.2hPa
+Day 4: Moderate Rain (5.22mm) | Temp: 21.0C, Hum: 52.5%, Press: 1017.4hPa
+Day 5: Light Rain (2.49mm) | Temp: 21.3C, Hum: 54.2%, Press: 1017.6hPa
+Day 6: No Rain (0.01mm) | Temp: 21.5C, Hum: 55.1%, Press: 1017.9hPa
+Day 7: No Rain (0.00mm) | Temp: 21.3C, Hum: 56.3%, Press: 1017.9hPa
