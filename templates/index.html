@@ -1,234 +1,595 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rainfall Prediction</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Rainfall Prediction - AI Weather Forecast</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/framer-motion@11/dist/framer-motion.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
-            --primary: #4f46e5;
-            --primary-dark: #4338ca;
-            --secondary: #06b6d4;
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #8b5cf6;
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-card: rgba(21, 25, 50, 0.6);
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-subtle: rgba(148, 163, 184, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent),
-                              radial-gradient(circle at bottom left, #0f172a, transparent);
-        }
-
-        header {
-            margin-top: 3rem;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 600;
-            background: linear-gradient(to right, var(--secondary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 20% 10%, rgba(59, 130, 246, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15), transparent 40%);
         }
 
         .container {
-            width: 90%;
-            max-width: 800px;
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-top: 2rem;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        /* Input Section */
+        .input-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
             padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 1.5rem;
         }
 
         label {
-            font-size: 1.2rem;
-            color: var(--text-color);
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         input[type="date"] {
             padding: 1rem 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--text-muted);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Outfit', sans-serif;
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: all 0.3s ease;
             color-scheme: dark;
+            min-width: 250px;
         }
 
         input[type="date"]:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         button {
-            padding: 1rem 2rem;
-            border-radius: 12px;
+            padding: 1rem 2.5rem;
+            border-radius: 16px;
             border: none;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
         }
 
         button:active {
             transform: translateY(0);
         }
 
-        .results {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+        /* Tomorrow's Forecast - Hero Card */
+        .tomorrow-section {
+            margin-bottom: 3rem;
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .results.visible {
+        .tomorrow-section.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.3s;
+            gap: 0.75rem;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--secondary);
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 2px;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 32px;
+            padding: 3rem 2rem;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .hero-left {
+            text-align: left;
+        }
+
+        .hero-date {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-location {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .hero-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        .hero-center {
+            text-align: center;
+            padding: 0 2rem;
+            border-left: 1px solid var(--border-subtle);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        .probability-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .probability-value {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .rainfall-amount {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .hero-right {
+            text-align: right;
+        }
+
+        .weather-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* Week Forecast Grid */
+        .week-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+        }
+
+        .week-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .forecast-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
         }
 
         .card-date {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-probability {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 0.5rem;
         }
 
         .card-status {
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--secondary);
-        }
-
-        .card-rain {
-            font-size: 1.5rem;
-            font-weight: 700;
+            color: var(--accent-cyan);
             margin-bottom: 1rem;
-            background: linear-gradient(to right, #fff, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
-        .card-details {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .card-rainfall {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .card-metrics {
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
+            gap: 0.4rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
         /* Loading Spinner */
         .loader {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary);
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-left-color: var(--accent-blue);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
             display: none;
-            margin: 20px auto;
+            margin: 2rem auto;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Status Colors */
+        .status-none {
+            background: rgba(100, 116, 139, 0.15);
+            color: var(--text-muted);
+            border-color: rgba(100, 116, 139, 0.3);
+        }
+
+        .status-light {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .status-moderate {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .status-heavy {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-center {
+                border-left: none;
+                border-right: none;
+                border-top: 1px solid var(--border-subtle);
+                border-bottom: 1px solid var(--border-subtle);
+                padding: 2rem 0;
+            }
+
+            .hero-right {
+                text-align: center;
+            }
+
+            .detail-item {
+                justify-content: center;
+            }
+
+            .forecast-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
         }
     </style>
 </head>
+
 <body>
-
-    <header>
-        <h1>Rainfall Predictor</h1>
-        <p class="subtitle">AI-Powered Weather Forecasting</p>
-    </header>
-
     <div class="container">
-        <form id="predictForm" class="input-group">
-            <label for="startDate">Select Start Date</label>
-            <input type="date" id="startDate" name="startDate" required>
-            <button type="submit">Predict Next 7 Days</button>
-        </form>
+        <header>
+            <h1>Rainfall Forecast</h1>
+            <p class="subtitle">AI-Powered Weather Prediction System</p>
+        </header>
+
+        <div class="input-section">
+            <form id="predictForm" class="input-group">
+                <label for="startDate">Select Start Date</label>
+                <input type="date" id="startDate" name="startDate" required>
+                <button type="submit">Generate Forecast</button>
+            </form>
+        </div>
 
         <div class="loader" id="loader"></div>
 
-        <div id="resultsArea" class="results">
-            <!-- Cards will be injected here -->
+        <!-- Tomorrow's Forecast -->
+        <div id="tomorrowSection" class="tomorrow-section">
+            <h2 class="section-title">Tomorrow's Forecast</h2>
+            <div id="tomorrowCard" class="hero-card">
+                <!-- Tomorrow's forecast will be injected here -->
+            </div>
+        </div>
+
+        <!-- Week Forecast -->
+        <div id="weekSection" class="week-section">
+            <h2 class="section-title">7-Day Forecast</h2>
+            <div id="forecastGrid" class="forecast-grid">
+                <!-- Forecast cards will be injected here -->
+            </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('predictForm').addEventListener('submit', async function(e) {
+        // CountUp Component (converted from React to vanilla JS)
+        class CountUp {
+            constructor(element, options) {
+                this.element = element;
+                this.from = options.from || 0;
+                this.to = options.to;
+                this.duration = (options.duration || 2) * 1000;
+                this.separator = options.separator || '';
+                this.decimals = this.getDecimalPlaces(this.to);
+                this.startTime = null;
+                this.animationFrame = null;
+            }
+
+            getDecimalPlaces(num) {
+                const str = num.toString();
+                if (str.includes('.')) {
+                    const decimals = str.split('.')[1];
+                    if (parseInt(decimals) !== 0) {
+                        return decimals.length;
+                    }
+                }
+                return 0;
+            }
+
+            formatValue(value) {
+                const options = {
+                    useGrouping: !!this.separator,
+                    minimumFractionDigits: this.decimals,
+                    maximumFractionDigits: this.decimals
+                };
+                const formatted = new Intl.NumberFormat('en-US', options).format(value);
+                return this.separator ? formatted.replace(/,/g, this.separator) : formatted;
+            }
+
+            easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            animate(timestamp) {
+                if (!this.startTime) this.startTime = timestamp;
+                const elapsed = timestamp - this.startTime;
+                const progress = Math.min(elapsed / this.duration, 1);
+                const easedProgress = this.easeOutCubic(progress);
+                const current = this.from + (this.to - this.from) * easedProgress;
+
+                this.element.textContent = this.formatValue(current);
+
+                if (progress < 1) {
+                    this.animationFrame = requestAnimationFrame((t) => this.animate(t));
+                }
+            }
+
+            start() {
+                this.animationFrame = requestAnimationFrame((t) => this.animate(t));
+            }
+
+            stop() {
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+            }
+        }
+
+        function calculateRainfallProbability(rainfall) {
+            // Convert rainfall mm to probability percentage
+            // 0mm = 0%, 20mm+ = 100%
+            const probability = Math.min(100, (parseFloat(rainfall) / 20) * 100);
+            return Math.round(probability);
+        }
+
+        function getStatusClass(status) {
+            const statusMap = {
+                'No Rain': 'status-none',
+                'Light Rain': 'status-light',
+                'Moderate Rain': 'status-moderate',
+                'Heavy Rain': 'status-heavy'
+            };
+            return statusMap[status] || 'status-none';
+        }
+
+        document.getElementById('predictForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const date = document.getElementById('startDate').value;
-            const resultsArea = document.getElementById('resultsArea');
             const loader = document.getElementById('loader');
-            
+            const tomorrowSection = document.getElementById('tomorrowSection');
+            const weekSection = document.getElementById('weekSection');
+            const tomorrowCard = document.getElementById('tomorrowCard');
+            const forecastGrid = document.getElementById('forecastGrid');
+
             if (!date) return;
 
-            // Clear previous results
-            resultsArea.innerHTML = '';
-            resultsArea.classList.remove('visible');
+            // Hide previous results
+            tomorrowSection.classList.remove('visible');
+            weekSection.classList.remove('visible');
+            tomorrowCard.innerHTML = '';
+            forecastGrid.innerHTML = '';
             loader.style.display = 'block';
 
             try {
@@ -244,41 +605,119 @@
                 loader.style.display = 'none';
 
                 if (data.error) {
-                    resultsArea.innerHTML = `<p style="color: red; text-align: center;">${data.error}</p>`;
-                    resultsArea.classList.add('visible');
+                    forecastGrid.innerHTML = `<p style="color: var(--danger); text-align: center; grid-column: 1/-1;">${data.error}</p>`;
+                    weekSection.classList.add('visible');
                     return;
                 }
 
-                data.forEach((day, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.style.animationDelay = `${index * 100}ms`;
-                    
-                    card.innerHTML = `
-                        <div class="card-date">${day.Date}</div>
-                        <div class="card-status">${day.Status}</div>
-                        <div class="card-rain">${day.Predicted_Rainfall}</div>
-                        <div class="card-details">
-                            <span>Temp: ${day.Temperature}</span>
-                            <span>Hum: ${day.Humidity}</span>
-                            <span>Press: ${day.Pressure}</span>
+                // Tomorrow's forecast (first day)
+                if (data.length > 0) {
+                    const tomorrow = data[0];
+                    const probability = calculateRainfallProbability(tomorrow.Predicted_Rainfall);
+                    const statusClass = getStatusClass(tomorrow.Status);
+
+                    tomorrowCard.innerHTML = `
+                        <div class="hero-content">
+                            <div class="hero-left">
+                                <div class="hero-date">${tomorrow.Date}</div>
+                                <div class="hero-location">Tomorrow</div>
+                                <span class="hero-status ${statusClass}">${tomorrow.Status}</span>
+                            </div>
+                            <div class="hero-center">
+                                <div class="probability-label">Rainfall Probability</div>
+                                <div class="probability-value">
+                                    <span id="probabilityCounter">0</span>%
+                                </div>
+                                <div class="rainfall-amount">${tomorrow.Predicted_Rainfall}</div>
+                            </div>
+                            <div class="hero-right">
+                                <div class="weather-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Temperature</span>
+                                        <span class="detail-value">${tomorrow.Temperature}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Humidity</span>
+                                        <span class="detail-value">${tomorrow.Humidity}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Pressure</span>
+                                        <span class="detail-value">${tomorrow.Pressure}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     `;
-                    resultsArea.appendChild(card);
+
+                    // Animate probability counter
+                    setTimeout(() => {
+                        const counterElement = document.getElementById('probabilityCounter');
+                        const counter = new CountUp(counterElement, {
+                            from: 0,
+                            to: probability,
+                            duration: 2
+                        });
+                        counter.start();
+                    }, 300);
+
+                    tomorrowSection.classList.add('visible');
+                }
+
+                // Remaining 6 days
+                data.slice(1).forEach((day, index) => {
+                    const probability = calculateRainfallProbability(day.Predicted_Rainfall);
+                    const statusClass = getStatusClass(day.Status);
+
+                    const card = document.createElement('div');
+                    card.className = 'forecast-card';
+                    card.style.animationDelay = `${index * 50}ms`;
+
+                    card.innerHTML = `
+                        <div class="card-date">${day.Date}</div>
+                        <div class="card-probability">
+                            <span class="prob-counter-${index}">0</span>%
+                        </div>
+                        <div class="card-status ${statusClass}">${day.Status}</div>
+                        <div class="card-rainfall">${day.Predicted_Rainfall}</div>
+                        <div class="card-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Temp</span>
+                                <span class="metric-value">${day.Temperature}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Humidity</span>
+                                <span class="metric-value">${day.Humidity}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Pressure</span>
+                                <span class="metric-value">${day.Pressure}</span>
+                            </div>
+                        </div>
+                    `;
+                    forecastGrid.appendChild(card);
+
+                    // Animate each card's probability
+                    setTimeout(() => {
+                        const counterElement = card.querySelector(`.prob-counter-${index}`);
+                        const counter = new CountUp(counterElement, {
+                            from: 0,
+                            to: probability,
+                            duration: 1.5
+                        });
+                        counter.start();
+                    }, 500 + (index * 100));
                 });
 
-                // Trigger reflow for transition
-                setTimeout(() => {
-                    resultsArea.classList.add('visible');
-                }, 50);
+                weekSection.classList.add('visible');
 
             } catch (error) {
                 console.error('Error:', error);
                 loader.style.display = 'none';
-                resultsArea.innerHTML = '<p style="color: red; text-align: center;">An error occurred. Please try again.</p>';
-                resultsArea.classList.add('visible');
+                forecastGrid.innerHTML = '<p style="color: var(--danger); text-align: center; grid-column: 1/-1;">An error occurred. Please try again.</p>';
+                weekSection.classList.add('visible');
             }
         });
     </script>
 </body>
+
 </html>
