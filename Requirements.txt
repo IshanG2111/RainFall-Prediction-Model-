@@ -1,0 +1,5 @@
+For the MACHINE LEARNING MODEL we require only :-
+
+1. pandas>=2.0.0
+2. numpy>=1.24.0
+3. scikit-learn>=1.3.0
