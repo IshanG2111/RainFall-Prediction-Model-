@@ -10,3 +10,6 @@ This repository contains the **Machine Learning backend module** for predicting 
 Your role: **ML Engineer – responsible only for the ML model, training pipeline, and prediction logic.**  
 Frontend and dataset preparation will be handled by other team members.
 
+Run Requirements.txt 
+pip install -r requirements.txt
+
