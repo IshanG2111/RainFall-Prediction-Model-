@@ -1,306 +1,163 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error, r2_score
 import pickle
-from datetime import datetime, timedelta
+import os
 import warnings
+
 warnings.filterwarnings('ignore')
 
 class RainfallPredictor:
-    def __init__(self, data_path='resources/india_2000_2024_daily_weather.csv'):
+    def __init__(self, data_path='data_processed/master_dataset.parquet'):
         """Initialize the rainfall prediction model"""
         self.data_path = data_path
         self.model = None
-        self.city_encoder = LabelEncoder()
-        self.feature_columns = None
+        self.scaler = StandardScaler()
+        # Added month and day_of_year to features for seasonality
+        self.feature_columns = [
+            'HEM_daily', 'WDP_wind_mean', 'WDP_vorticity', 'WDP_shear',
+            'UTH_daily', 'OLR_daily', 'LST_mean', 'LST_max', 'CMP_cloud_mean',
+            'month', 'day_of_year'
+        ]
+        self.target_column = 'IMC_daily_total'
         self.df = None
-        
+        self.metrics = {}
+
     def load_and_preprocess_data(self):
         """Load and preprocess the dataset"""
-        print("Loading dataset...")
-        self.df = pd.read_csv(self.data_path)
+        print(f"Loading dataset from {self.data_path}...")
         
-        # Convert date to datetime
-        self.df['date'] = pd.to_datetime(self.df['date'])
-        
-        # Remove any rows with missing values
+        if not os.path.exists(self.data_path):
+            csv_path = self.data_path.replace('.parquet', '.csv')
+            if os.path.exists(csv_path):
+                 self.df = pd.read_csv(csv_path)
+            else:
+                raise FileNotFoundError(f"Data file not found at {self.data_path}")
+        else:
+            self.df = pd.read_parquet(self.data_path)
+
+        # Handle missing values
         initial_rows = len(self.df)
-        self.df = self.df.dropna()
+        self.df = self.df.dropna(subset=self.feature_columns + [self.target_column])
         print(f"Removed {initial_rows - len(self.df)} rows with missing values")
         
-        # Create target variable: Will it rain tomorrow? (rain_sum > 0)
-        self.df = self.df.sort_values(['city', 'date'])
-        self.df['rain_tomorrow'] = self.df.groupby('city')['rain_sum'].shift(-1)
-        self.df['rain_tomorrow'] = (self.df['rain_tomorrow'] > 0).astype(int)
-        
-        # Create rain_today feature
-        self.df['rain_today'] = (self.df['rain_sum'] > 0).astype(int)
-        
-        # Remove last row for each city (no tomorrow data)
-        self.df = self.df.groupby('city').apply(lambda x: x.iloc[:-1]).reset_index(drop=True)
-        
-        # Encode city
-        self.df['city_encoded'] = self.city_encoder.fit_transform(self.df['city'])
+        # Ensure month/day_of_year exist (if not in parquet, derive from date)
+        if 'month' not in self.df.columns or 'day_of_year' not in self.df.columns:
+            if 'date' in self.df.columns:
+                self.df['date'] = pd.to_datetime(self.df['date'])
+                self.df['month'] = self.df['date'].dt.month
+                self.df['day_of_year'] = self.df['date'].dt.dayofyear
         
         print(f"Dataset loaded: {len(self.df)} records")
-        print(f"Cities: {self.df['city'].unique()}")
-        print(f"Date range: {self.df['date'].min()} to {self.df['date'].max()}")
-        print(f"Rain tomorrow distribution: {self.df['rain_tomorrow'].value_counts().to_dict()}")
-        
         return self.df
-    
+
     def prepare_features(self):
         """Prepare feature matrix and target vector"""
-        # Select features for training
-        self.feature_columns = [
-            'city_encoded',
-            'temperature_2m_max',
-            'temperature_2m_min',
-            'apparent_temperature_max',
-            'apparent_temperature_min',
-            'precipitation_sum',
-            'wind_speed_10m_max',
-            'wind_gusts_10m_max',
-            'rain_today'
-        ]
-        
         X = self.df[self.feature_columns]
-        y = self.df['rain_tomorrow']
+        y = self.df[self.target_column]
         
-        return X, y
-    
+        # Log transform target to handle skewness (zero-inflated data)
+        # We use log1p (log(1+x)) to handle zeros
+        y_transformed = np.log1p(y)
+        
+        return X, y, y_transformed
+
     def train_model(self, test_size=0.2, random_state=42):
-        """Train the Random Forest model"""
+        """Train the HistGradientBoostingRegressor"""
         print("\nPreparing features...")
-        X, y = self.prepare_features()
-        
+        X, y_original, y_transformed = self.prepare_features()
+
         # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state, stratify=y
+        X_train, X_test, y_train_log, y_test_log = train_test_split(
+            X, y_transformed, test_size=test_size, random_state=random_state
         )
         
+        # Keep original scale y_test for final evaluation
+        _, _, _, y_test_original = train_test_split(
+            X, y_original, test_size=test_size, random_state=random_state
+        )
+
         print(f"Training set: {len(X_train)} samples")
         print(f"Test set: {len(X_test)} samples")
-        
-        # Train Random Forest Classifier
-        print("\nTraining Random Forest model...")
-        self.model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=15,
-            min_samples_split=10,
-            min_samples_leaf=5,
+
+        # Scale features
+        print("Scaling features...")
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
+
+        # Train HistGradientBoostingRegressor (Better for large datasets than Random Forest)
+        print("\nTraining HistGradientBoostingRegressor...")
+        self.model = HistGradientBoostingRegressor(
+            max_iter=500,
+            learning_rate=0.05,
+            max_depth=10,
             random_state=random_state,
-            n_jobs=-1
+            early_stopping=True
         )
-        
-        self.model.fit(X_train, y_train)
-        
+
+        self.model.fit(X_train_scaled, y_train_log)
+
         # Evaluate model
-        y_pred = self.model.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
+        # Predict log values
+        y_pred_log = self.model.predict(X_test_scaled)
         
-        print(f"\n{'='*50}")
-        print(f"Model Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
-        print(f"{'='*50}")
+        # Inverse transform predictions to original scale (exp(x) - 1)
+        y_pred_original = np.expm1(y_pred_log)
+        y_pred_original = np.maximum(0, y_pred_original) # Ensure no negatives
+
+        rmse = np.sqrt(mean_squared_error(y_test_original, y_pred_original))
+        r2 = r2_score(y_test_original, y_pred_original)
         
-        print("\nClassification Report:")
-        print(classification_report(y_test, y_pred, target_names=['No Rain', 'Rain']))
-        
-        print("\nConfusion Matrix:")
-        cm = confusion_matrix(y_test, y_pred)
-        print(cm)
-        
-        # Feature importance
-        feature_importance = pd.DataFrame({
-            'Feature': self.feature_columns,
-            'Importance': self.model.feature_importances_
-        }).sort_values('Importance', ascending=False)
-        
-        print("\nTop Features by Importance:")
-        print(feature_importance)
-        
-        return accuracy
-    
-    def predict_next_7_days(self, city, start_date=None):
-        """
-        Predict rainfall for the next 7 days for a given city
-        Uses the last known weather data for that city and makes sequential predictions
-        """
-        if self.model is None:
-            raise ValueError("Model not trained. Call train_model() first.")
-        
-        # Get the most recent data for the city
-        city_data = self.df[self.df['city'] == city].sort_values('date')
-        
-        if len(city_data) == 0:
-            raise ValueError(f"City '{city}' not found in dataset")
-        
-        # Get the last record for this city
-        last_record = city_data.iloc[-1].copy()
-        
-        # If start_date is provided, use it; otherwise use the day after the last record
-        if start_date is None:
-            current_date = last_record['date'] + timedelta(days=1)
-        else:
-            current_date = pd.to_datetime(start_date)
-        
-        predictions = []
-        
-        # Current weather state (start from last known data)
-        current_weather = {
-            'temperature_2m_max': last_record['temperature_2m_max'],
-            'temperature_2m_min': last_record['temperature_2m_min'],
-            'apparent_temperature_max': last_record['apparent_temperature_max'],
-            'apparent_temperature_min': last_record['apparent_temperature_min'],
-            'precipitation_sum': last_record['precipitation_sum'],
-            'wind_speed_10m_max': last_record['wind_speed_10m_max'],
-            'wind_gusts_10m_max': last_record['wind_gusts_10m_max'],
-            'rain_today': int(last_record['rain_sum'] > 0)
+        self.metrics = {
+            'RMSE': round(rmse, 4),
+            'R2': round(r2, 4),
+            'Test_Samples': len(X_test)
         }
-        
-        # Encode city
-        city_encoded = self.city_encoder.transform([city])[0]
-        
-        for day in range(7):
-            # Prepare features for prediction
-            features = np.array([[
-                city_encoded,
-                current_weather['temperature_2m_max'],
-                current_weather['temperature_2m_min'],
-                current_weather['apparent_temperature_max'],
-                current_weather['apparent_temperature_min'],
-                current_weather['precipitation_sum'],
-                current_weather['wind_speed_10m_max'],
-                current_weather['wind_gusts_10m_max'],
-                current_weather['rain_today']
-            ]])
-            
-            # Predict rain tomorrow
-            rain_tomorrow_prob = self.model.predict_proba(features)[0]
-            rain_tomorrow = self.model.predict(features)[0]
-            rain_tomorrow_str = 'Yes' if rain_tomorrow == 1 else 'No'
-            
-            # Calculate probability percentage
-            rain_probability = rain_tomorrow_prob[1] * 100  # Probability of rain
-            
-            # Determine status based on probability
-            if rain_probability < 20:
-                status = "No Rain"
-            elif rain_probability < 50:
-                status = "Light Rain"
-            elif rain_probability < 75:
-                status = "Moderate Rain"
-            else:
-                status = "Heavy Rain"
-            
-            # Store prediction
-            predictions.append({
-                'Date': current_date.strftime('%a, %b %d'),
-                'FullDate': current_date.strftime('%Y-%m-%d'),
-                'City': city,
-                'Temperature': f"{current_weather['temperature_2m_min']:.1f}°C - {current_weather['temperature_2m_max']:.1f}°C",
-                'Humidity': f"N/A",  # Not in this dataset
-                'Pressure': f"N/A",  # Not in this dataset
-                'WindSpeed': f"{current_weather['wind_speed_10m_max']:.1f} km/h",
-                'RainProbability': f"{rain_probability:.0f}",
-                'RainTomorrow': rain_tomorrow_str,
-                'Status': status
-            })
-            
-            # Update for next iteration with realistic variations
-            current_weather['temperature_2m_max'] += np.random.uniform(-2, 2)
-            current_weather['temperature_2m_min'] += np.random.uniform(-2, 2)
-            current_weather['apparent_temperature_max'] += np.random.uniform(-2, 2)
-            current_weather['apparent_temperature_min'] += np.random.uniform(-2, 2)
-            current_weather['precipitation_sum'] = max(0, current_weather['precipitation_sum'] + np.random.uniform(-2, 2))
-            current_weather['wind_speed_10m_max'] += np.random.uniform(-3, 3)
-            current_weather['wind_gusts_10m_max'] += np.random.uniform(-3, 3)
-            
-            # Keep values in realistic ranges
-            current_weather['temperature_2m_max'] = max(10, min(50, current_weather['temperature_2m_max']))
-            current_weather['temperature_2m_min'] = max(0, min(40, current_weather['temperature_2m_min']))
-            current_weather['apparent_temperature_max'] = max(5, min(55, current_weather['apparent_temperature_max']))
-            current_weather['apparent_temperature_min'] = max(-5, min(45, current_weather['apparent_temperature_min']))
-            current_weather['wind_speed_10m_max'] = max(0, min(50, current_weather['wind_speed_10m_max']))
-            current_weather['wind_gusts_10m_max'] = max(0, min(80, current_weather['wind_gusts_10m_max']))
-            
-            # Today's rain becomes tomorrow's "rain today"
-            current_weather['rain_today'] = rain_tomorrow
-            
-            # Move to next day
-            current_date += timedelta(days=1)
-        
-        return predictions
-    
-    def save_model(self, filepath='model/rainfall_model.pkl'):
-        """Save the trained model"""
-        import os
+
+        print(f"\n{'='*50}")
+        print(f"Model Evaluation Metrics (Original Scale):")
+        print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+        print(f"R2 Score: {r2:.4f}")
+        print(f"{'='*50}")
+
+        return self.metrics
+
+    def save_model(self, filepath='models/model_frame_1.pkl'):
+        """Save the trained model, metrics, and scaler"""
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         
         model_data = {
             'model': self.model,
-            'city_encoder': self.city_encoder,
-            'feature_columns': self.feature_columns
+            'scaler': self.scaler,
+            'feature_columns': self.feature_columns,
+            'metrics': self.metrics,
+            'target_transform': 'log1p' # Metadata to know we used log transform
         }
         
         with open(filepath, 'wb') as f:
             pickle.dump(model_data, f)
         
-        print(f"\nModel saved to {filepath}")
-    
-    def load_model(self, filepath='model/rainfall_model.pkl'):
-        """Load a trained model"""
-        with open(filepath, 'rb') as f:
-            model_data = pickle.load(f)
-        
-        self.model = model_data['model']
-        self.city_encoder = model_data['city_encoder']
-        self.feature_columns = model_data['feature_columns']
-        
-        print(f"Model loaded from {filepath}")
-
+        print(f"\nModel and metrics saved to {filepath}")
 
 def main():
-    """Main function to train and test the model"""
     print("="*60)
-    print("RAINFALL PREDICTION MODEL - TRAINING")
-    print("Using India 2000-2024 Daily Weather Data")
-    print("="*60)
-    
-    # Initialize predictor
-    predictor = RainfallPredictor()
-    
-    # Load and preprocess data
-    predictor.load_and_preprocess_data()
-    
-    # Train model
-    accuracy = predictor.train_model()
-    
-    # Save model
-    predictor.save_model()
-    
-    # Test predictions
-    print("\n" + "="*60)
-    print("TESTING PREDICTIONS")
-    print("="*60)
-    
-    cities = predictor.df['city'].unique()[:3]  # Test with first 3 cities
-    
-    for city in cities:
-        print(f"\n{city} - Next 7 Days Forecast:")
-        print("-" * 60)
-        predictions = predictor.predict_next_7_days(city)
-        
-        for pred in predictions:
-            print(f"{pred['Date']}: {pred['Status']} ({pred['RainProbability']}% probability)")
-    
-    print("\n" + "="*60)
-    print("Training Complete!")
+    print("RAINFALL PREDICTION MODEL - PHASE 1 RE-TRAINING (IMPROVED)")
+    print("Using HistGradientBoosting + Log Transform")
     print("="*60)
 
+    try:
+        predictor = RainfallPredictor()
+        predictor.load_and_preprocess_data()
+        predictor.train_model()
+        predictor.save_model()
+        print("\n" + "="*60)
+        print("Training Complete!")
+        print("="*60)
+    except Exception as e:
+        print(f"\nError during training: {e}")
 
 if __name__ == "__main__":
     main()
