@@ -5,6 +5,14 @@ import pandas as pd
 from datetime import datetime
 import os
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RAW_DIR  = os.path.join(BASE_DIR, "data_raw", "2_days")
+PROC_DIR = os.path.join(BASE_DIR, "data_processed", "2_days")
+
+print("BASE_DIR:", BASE_DIR)
+print("RAW_DIR:", RAW_DIR)
+print("PROC_DIR:", PROC_DIR)
+
 grid = pd.read_parquet("../data_processed/2_days/grid/grid_definition.parquet")
 
 LAT_MIN, LAT_MAX = 6.0, 38.0
@@ -17,21 +25,22 @@ NUM_COLS = int((LON_MAX - LON_MIN) / GRID_STEP)      # 120
 # HELPER FUNCTIONS — USED BY ALL PRODUCTS
 
 def build_latlon_from_attrs(h, H, W):
-    """Reconstruct lat/lon 2D grids from attributes (for INSAT full-disk products)."""
+    """Reconstruct correct INSAT geolocation grid."""
     upper_lat = h.attrs["upper_latitude"][0]
     lower_lat = h.attrs["lower_latitude"][0]
     left_lon  = h.attrs["left_longitude"][0]
     right_lon = h.attrs["right_longitude"][0]
 
-    # Correct orientation → South → North
-    lat_vals = np.linspace(lower_lat, upper_lat, H)
+    # INSAT orientation:
+    # Row 0 = upper_lat (north)
+    # Row H = lower_lat (south)
+    lat_vals = np.linspace(upper_lat, lower_lat, H)
     lon_vals = np.linspace(left_lon, right_lon, W)
 
     lat2d = np.repeat(lat_vals[:, None], W, axis=1)
     lon2d = np.repeat(lon_vals[None, :], H, axis=0)
 
     return lat2d, lon2d
-
 
 def clip_to_india(lat2d, lon2d, data):
     """Return flattened arrays clipped to India bounding box."""
@@ -59,7 +68,7 @@ def aggregate_and_fix_missing(grid_id, values, date):
     full_grid["date"] = date
 
     out = full_grid.merge(out, on="grid_id", how="left")
-    out["value"] = out["value"].fillna(0)
+    out["value"] = out["value"]
 
     return out
 
@@ -155,9 +164,22 @@ def process_wdp_daily(date_str):
 
 # 3.3 — LST (Kelvin)
 
+def aggregate_lst(grid_id, values, date):
+    df = pd.DataFrame({"grid_id": grid_id, "value": values})
+    out = df.groupby("grid_id")["value"].mean().reset_index()
+
+    # insert missing grid rows (keep NaN)
+    full_grid = grid[["grid_id", "lat_center", "lon_center"]].copy()
+    full_grid["date"] = date
+
+    out = full_grid.merge(out, on="grid_id", how="left")
+
+    return out   # DON'T fillna(0)
+
 def process_lst_daily(date_str):
 
-    pattern = f"../data_raw/2_days/lst/*{date_str}*_L2B_LST_*.h5"
+    # Find all LST files for this date
+    pattern = os.path.join(RAW_DIR, "lst", f"*{date_str}*_L2B_LST_*.h5")
     files = sorted(glob.glob(pattern))
 
     if not files:
@@ -166,24 +188,54 @@ def process_lst_daily(date_str):
 
     acc = None
     lat2d = lon2d = None
-    n = 0
+    valid_count = 0
 
     for fp in files:
         with h5py.File(fp, "r") as h:
-            arr = h["LST"][0]
+
+            # Read raw LST
+            arr = h["LST"][0].astype(float)
+
+            # Replace missing pixels (-999) with NaN
+            arr[arr == -999] = np.nan
+
+            # Skip frames with no valid LST (night/cloudy)
+            if np.all(np.isnan(arr)):
+                print("Skipping invalid or nighttime LST:", os.path.basename(fp))
+                continue
+
             H, W = arr.shape
 
+            # Rebuild INSAT lat/lon grid from attributes
             if lat2d is None:
                 lat2d, lon2d = build_latlon_from_attrs(h, H, W)
 
-            acc = arr if acc is None else acc + arr
-            n += 1
+            # Smart accumulation: keep valid pixels only
+            if acc is None:
+                acc = arr
+            else:
+                # Combine valid pixels: prefer valid arr pixels over NaN in acc
+                acc = np.where(np.isnan(acc) & ~np.isnan(arr), arr,
+                       np.where(~np.isnan(acc) & np.isnan(arr), acc,
+                                np.where(~np.isnan(acc) & ~np.isnan(arr), acc + arr, np.nan)))
 
-    daily_lst = acc / max(1, n)
-    lat_i, lon_i, val_i = clip_to_india(lat2d, lon2d, daily_lst)
+            valid_count += 1
+
+    # If nothing valid found
+    if valid_count == 0:
+        print(f"No valid LST for {date_str}")
+        return None
+
+    # Compute daily mean (only over available valid frames)
+    daily_lst = acc / valid_count
+
+    # Clip to India
+    lat_i, lon_i, lst_i = clip_to_india(lat2d, lon2d, daily_lst)
     grid_id = map_to_grid(lat_i, lon_i)
 
-    out = aggregate_and_fix_missing(grid_id, val_i, datetime.strptime(date_str, "%d%b%Y").date())
+    # Aggregate (do NOT fill NaN!)
+    date = datetime.strptime(date_str, "%d%b%Y").date()
+    out = aggregate_lst(grid_id, lst_i, date)
     out = out.rename(columns={"value": "lst_k"})
 
     return save_daily(out, "lst", out["date"].iloc[0])
