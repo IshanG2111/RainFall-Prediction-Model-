@@ -179,4 +179,30 @@ Total grid cells: 15,360
 This file is used by all subsequent stages of the pipeline,
 including data aggregation (IMC, WDP, LST, CMP, UTH, OLR, HEM),
 model training, and backend prediction services.
+
+
+## Step 3 — Daily Aggregation of Half-Hourly Data
+### **3.1 IMC Daily Processing**
+Processes INSAT-3DR IMC rainfall (mm/hr) by reconstructing geolocation from satellite metadata, converting half-hourly rain rates into daily rainfall totals, clipping to the India domain, mapping to the 0.25° India grid, and generating a complete daily rainfall field with 15,360 grid cells.
+
+### **3.2 WDP Daily Processing**
+Processes INSAT-3DR WDP wind data (U/V components). Extracts surface-level winds, computes wind speed magnitude, reprojects the WDP grid to the 0.25° India grid, and produces a daily-mean wind speed dataset.
+
+### **3.3 LST Daily Processing**
+Processes INSAT-3DR Land Surface Temperature (LST in Kelvin). Reconstructs full-disk geolocation from satellite attributes, clips to India, performs daily averaging of temperature, and maps the dataset onto the unified 0.25° India grid.
+
+### **3.4 CMP Daily Processing**
+Processes INSAT-3DR Cloud Microphysics fields. Extracts both Cloud Effective Radius (CER) and Cloud Optical Thickness (COT), applies scale factors, reconstructs geolocation, aligns to the 0.25° grid, and generates daily-mean CER and COT grids.
+
+### **3.5 UTH Daily Processing**
+Processes daily Upper Tropospheric Humidity (already binned daily by IMD). Reprojects the satellite grid using metadata, clips to India, maps values onto the 0.25° India grid, and outputs a complete daily UTH field.
+
+### **3.6 OLR Daily Processing**
+Processes daily Outgoing Longwave Radiation (OLR). Utilizes INSAT-3DR's daily binned radiative flux product, reconstructs lat/lon grids, maps to the 0.25° India grid, and generates a daily OLR dataset used as a key convective indicator.
+
+### **3.7 HEM Daily Processing**
+Processes INSAT-3DR HEM daily precipitation (mm/day). Uses the already-binned daily rainfall total, reconstructs geolocation, maps to the 0.25° grid, and outputs a complete daily rainfall field complementary to IMC.
+
+### **3.8 Merging all datasets**
+
 ---
