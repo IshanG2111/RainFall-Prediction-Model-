@@ -204,5 +204,6 @@ Processes daily Outgoing Longwave Radiation (OLR). Utilizes INSAT-3DR's daily bi
 Processes INSAT-3DR HEM daily precipitation (mm/day). Uses the already-binned daily rainfall total, reconstructs geolocation, maps to the 0.25° grid, and outputs a complete daily rainfall field complementary to IMC.
 
 ### **3.8 Merging all datasets**
+This step merges all the processed daily satellite products (IMC, WDP, LST, CMP, UTH, OLR, HEM) into a single unified daily dataset. The merge is performed on grid_id and date, producing a complete feature table with 15,360 grid cells per day. No ML-specific preprocessing is done at this stage; the output serves as the raw feature layer for Step 4.
 
 ---
