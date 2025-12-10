@@ -189,9 +189,101 @@ data_processed/2_days/daily_merged/daily_2025-07-16.parquet
 ## Step 4 — MERGE ALL DAILY PRODUCTS INTO ONE DATASET
 
 ### **4.1 Load Master Daily Files**
+Load all master daily Parquet files and verify their structure and ensure each contains exactly:
+- grid_id
+- lat_center
+- lon_center
+- date
+- daily aggregated feature (e.g., rain_mm, lst_k, wind_speed, etc.)
+This establishes the base input for building the final merged dataset.
+
 ### **4.2 Combine All Days into One Continuous Dataset**
+Each daily file contains 15,360 grid cells for that date.
+This step merges all files vertically into one consolidated dataframe. This combined table becomes the core dataset on which all subsequent preprocessing is performed.
+
 ### **4.3 Add Temporal / Seasonal Metadata**
+To help machine learning models understand seasonal patterns, several temporal features are added:
+
+| Column       | Meaning                                  |
+|--------------|------------------------------------------|
+| day          | Day of month                             |
+| month        | Month number                             |
+| year         | Year (useful for multi-year datasets)    |
+| day_of_year  | Numerical day 1–365                      |
+| week_of_year | ISO week index                           |
+| monsoon_flag | Binary flag (1 for Jun–Sep, 0 otherwise) |
+These metadata fields help capture seasonality, monsoon patterns, and weekly cycles.
+
 ### **4.4 Validate Target Column (IMC Rainfall)**
+IMC rainfall (rain_mm) is the target variable for prediction.
+This step verifies:
+- No negative rainfall values
+- No extreme outliers beyond known physical limits
+- All rows contain valid values (IMC grids with missing rainfall were already dropped earlier).
+
+This ensures that the target column is clean and suitable for supervised learning.
+
 ### **4.5 Identify Missing Feature Columns**
+Even after daily aggregation, certain satellite products naturally contain missing values:
+- LST missing under deep clouds
+- CMP (CER/COT) missing for retrieval failure
+- WDP (wind) missing at edge of domain
+- UTH/OLR occasionally missing due to sector gaps
+
+This stage:
+- Scans all feature columns
+- Flags missing or invalid entries
+- Prepares the dataset for structured imputation in Step 4.6
+
 ### **4.6 Handle Missing Feature Values (Feature Engineering Logic)**
+Each variable has different physical properties, so a custom imputation strategy is used.
+#### IMC Rainfall (Target)
+- IMC is the target → never imputed
+- If IMC rainfall is missing → the entire row is removed
+
+#### Variables Derived from Half-Hourly Data (WDP, LST, CMP)
+Missing values arise from cloud obstruction, retrieval failure, or edge-of-domain issues.
+
+A 3-level hierarchical imputation strategy is applied:
+1. Spatial Neighbor Median
+    - Use nearby 4–8 grid cells on the same day
+    - Captures local continuity
+   
+2. Latitude-Band Median
+   - Use values from all cells within the same latitude strip
+   - Useful when entire region is cloudy
+
+3. Monthly Climatology
+   - Fallback using long-term typical values for that month
+
+4. Physical Range Clipping
+   - Ensures all imputed values lie within known valid bounds
+   - Example:
+      - lst_k in 200–330 K
+      - cer in 0–60 µm
+      - cot in 0–200
+
+#### Daily Products (UTH, OLR, HEM)
+These are already stable daily stats from IMD.
+- Missing values replaced using same-day column mean
+- Ensures smoothness without distorting physical ranges
+
+This results in a fully filled, physically consistent dataset suitable for ML.
+
 ### **4.7 Save Final Merged Dataset**
+After all merging, engineering, and imputation:
+The final dataframe is saved to
+```
+data_processed/2_days/finaldata/final_dataset.parquet
+```
+This final dataset has:
+- All grid cells for each date 
+- Zero missing values 
+- Clean, calibrated satellite features 
+- Temporal metadata 
+- Rainfall target column
+
+Shape of final dataset:
+```
+(30718 rows, 18 columns)
+```
