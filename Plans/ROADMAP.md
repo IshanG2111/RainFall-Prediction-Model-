@@ -19,15 +19,15 @@ This roadmap outlines a robust, phase-wise approach for a 40–50 mark, 2-credit
 
 ### 1. 📑 DATASETS USED
 
-| Product | Name              | Freq.        | Role                                 |
-| ------- | ---------------- | ----------- | ------------------------------------- |
-| IMC     | 3RIMG_L2B_IMC    | Half-hourly | 🎯 Target Y (Rainfall, daily total)   |
-| HEM     | 3RIMG_L3B_HEM_DLY| Daily       | Optional feature/benchmark target     |
-| WDP     | 3RIMG_L2G_WDP    | Half-hourly | Wind, shear, vorticity, divergence (X)|
-| UTH     | 3RIMG_L2B_UTH    | Daily       | Humidity (X)                         |
-| OLR     | 3RIMG_L2B_OLR    | Daily       | Convection indicator (X)              |
-| LST     | 3RIMG_L2B_LST    | Half-hourly | Land surface temperature (X)          |
-| CMP     | 3RIMG_L2C_CMP    | Half-hourly | Cloud microphysics (optional X)       |
+| Product | Name              | Freq.       | Role                                   |
+|---------|-------------------|-------------|----------------------------------------|
+| IMC     | 3RIMG_L2B_IMC     | Half-hourly | 🎯 Target Y (Rainfall, daily total)    |
+| HEM     | 3RIMG_L3B_HEM_DLY | Daily       | Optional feature/benchmark target      |
+| WDP     | 3RIMG_L2G_WDP     | Half-hourly | Wind, shear, vorticity, divergence (X) |
+| UTH     | 3RIMG_L2B_UTH     | Daily       | Humidity (X)                           |
+| OLR     | 3RIMG_L2B_OLR     | Daily       | Convection indicator (X)               |
+| LST     | 3RIMG_L2B_LST     | Half-hourly | Land surface temperature (X)           |
+| CMP     | 3RIMG_L2C_CMP     | Half-hourly | Cloud microphysics (optional X)        |
 
 **Spatial Region:**  
 - India: Lat 6°N – 38°N, Lon 68°E – 98°E  
