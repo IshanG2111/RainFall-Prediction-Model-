@@ -55,8 +55,8 @@ python app.py
 *   `models/`: Stores the trained model binary (`.pkl`).
 
 ## 📊 Model Performance
-*   **R² Score**: ~0.76 (High Predictive Power)
-*   **RMSE**: ~11.8 mm
+*   **R² Score**: ~0.93 (High Predictive Power)
+*   **RMSE**: ~6.90 mm
 
 ---
 *Developed for Rainfall Prediction Project - 6th Sem*
