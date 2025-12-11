@@ -1,6 +1,6 @@
 # Rainfall Prediction Model (AI-Based) 🌦️
 
-This project implements an advanced AI-based rainfall prediction system using **INSAT-3DR satellite data** and **Machine Learning (HistGradientBoosting Regressor)**. It predicts daily rainfall amounts (in mm) for locations across India for the next 7 days.
+This project implements an advanced AI-based rainfall prediction system using **INSAT-3DR satellite data** and **Machine Learning ( )**. It predicts daily rainfall amounts (in mm) for locations across India for the next 7 days.
 
 ![UI Screenshot](image.png)
 

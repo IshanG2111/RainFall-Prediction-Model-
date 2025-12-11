@@ -604,20 +604,20 @@
                 </div>
                 <div class="hero-right">
                     <div class="detail-row">
-                        <span class="detail-label">Avg Temp</span>
+                        <span class="detail-label" title="Land Surface Temperature (measures Cloud Top during rain)">Satellite LST</span>
                         <span class="detail-value">${tomorrow.Temperature}</span>
                     </div>
                      <div class="detail-row">
-                        <span class="detail-label">Humidity (UTH)</span>
-                        <span class="detail-value">${details.HEM}</span>
+                        <span class="detail-label">Humidity</span>
+                        <span class="detail-value">${tomorrow.Humidity}</span>
                     </div>
                      <div class="detail-row">
                         <span class="detail-label">Wind Speed</span>
                         <span class="detail-value">${details['Wind Speed']}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Vorticity</span>
-                        <span class="detail-value">${details.Vorticity}</span>
+                        <span class="detail-label">COT / CER</span>
+                        <span class="detail-value">${details.COT} / ${details.CER}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Pressure (OLR)</span>
@@ -638,7 +638,7 @@
                     
                      <div class="satellite-details">
                         <span>LST: ${day.Temperature}</span>
-                        <span>WDP: ${d['Wind Speed'] || '-'}</span>
+                        <span>COT: ${d.COT || '-'}</span>
                     </div>
                 </div>
             `}).join('');

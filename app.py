@@ -32,15 +32,15 @@ def load_resources():
         print("Model not found. Please run training script (model.py).")
         
     # Load Grid
-    grid_path = 'data_processed/india_grid.csv'
+    grid_path = 'data_processed/2_days/grid/grid_definition.parquet'
     if os.path.exists(grid_path):
-        grid_df = pd.read_csv(grid_path)
+        grid_df = pd.read_parquet(grid_path)
         print(f"Grid loaded: {len(grid_df)} cells.")
     else:
         print("Grid file not found.")
 
     # Load Master Dataset for realistic sampling
-    master_path = 'data_processed/master_dataset.parquet'
+    master_path = 'data_processed/2_days/finaldata/final_dataset.parquet'
     if os.path.exists(master_path):
         master_df = pd.read_parquet(master_path)
         print(f"Master dataset loaded: {len(master_df)} records.")
@@ -75,8 +75,8 @@ def get_realistic_features(grid_id):
     Samples from historical data for that grid to simulate realistic weather conditions.
     """
     default_features = {
-        'HEM_daily': 0, 'WDP_wind_mean': 10, 'WDP_vorticity': 0, 'WDP_shear': 10,
-        'UTH_daily': 40, 'OLR_daily': 250, 'LST_mean': 30, 'LST_max': 35, 'CMP_cloud_mean': 0.1
+        'hem': 0, 'wind_speed': 10, 'uth': 40, 'olr': 250, 
+        'lst_k': 300, 'cer': 10, 'cot': 10
     }
     
     if master_df is None:
@@ -90,15 +90,13 @@ def get_realistic_features(grid_id):
         sample = grid_data.sample(1).iloc[0]
 
     features = {
-        'HEM_daily': sample.get('HEM_daily', 0),
-        'WDP_wind_mean': sample.get('WDP_wind_mean', 10),
-        'WDP_vorticity': sample.get('WDP_vorticity', 0),
-        'WDP_shear': sample.get('WDP_shear', 10),
-        'UTH_daily': sample.get('UTH_daily', 40),
-        'OLR_daily': sample.get('OLR_daily', 250),
-        'LST_mean': sample.get('LST_mean', 30),
-        'LST_max': sample.get('LST_max', 35),
-        'CMP_cloud_mean': sample.get('CMP_cloud_mean', 0.1)
+        'hem': sample.get('hem', 0),
+        'wind_speed': sample.get('wind_speed', 10),
+        'uth': sample.get('uth', 40),
+        'olr': sample.get('olr', 250),
+        'lst_k': sample.get('lst_k', 300),
+        'cer': sample.get('cer', 10),
+        'cot': sample.get('cot', 10)
     }
     
     # Add noise
@@ -137,8 +135,7 @@ def predict():
         
         # Feature columns must match training exactly
         feature_cols = [
-            'HEM_daily', 'WDP_wind_mean', 'WDP_vorticity', 'WDP_shear',
-            'UTH_daily', 'OLR_daily', 'LST_mean', 'LST_max', 'CMP_cloud_mean',
+            'hem', 'wind_speed', 'uth', 'olr', 'lst_k', 'cer', 'cot',
             'month', 'day_of_year'
         ]
 
@@ -183,18 +180,18 @@ def predict():
             
             predictions.append({
                 'Date': pred_date_str,
-                'Temperature': f"{features_dict['LST_max']:.1f}°C",
-                'Humidity': f"UTH: {features_dict['UTH_daily']:.0f}%",
-                'Pressure': f"OLR: {int(features_dict['OLR_daily'])} W/m²", 
+                 'Temperature': f"{features_dict['lst_k'] - 273.15:.1f}°C", # LST is in Kelvin
+                'Humidity': f"UTH: {features_dict['uth']:.0f}%",
+                'Pressure': f"OLR: {int(features_dict['olr'])} W/m²", 
                 'Predicted_Rainfall': f"{pred_rainfall:.1f} mm",
                 'Status': status,
                 # Simple probability heuristic based on prediction magnitude
                 'RainProbability': min(100, int(100 * (1 - np.exp(-pred_rainfall/5)))), 
                 'Details': {
-                    'Wind Speed': f"{features_dict['WDP_wind_mean']:.1f} m/s",
-                    'Cloud Mean': f"{features_dict['CMP_cloud_mean']:.2f}",
-                    'Vorticity': f"{features_dict['WDP_vorticity']:.2f}",
-                    'HEM': f"{features_dict['HEM_daily']:.2f}"
+                    'Wind Speed': f"{features_dict['wind_speed']:.1f} m/s",
+                    'COT': f"{features_dict['cot']:.2f}",
+                    'CER': f"{features_dict['cer']:.2f}",
+                    'HEM': f"{features_dict['hem']:.2f}"
                 }
             })
             
@@ -217,10 +214,10 @@ def get_cities():
 @app.route('/map-data', methods=['GET'])
 def get_map_data():
     try:
-        if not os.path.exists('data_processed/india_grid.csv'):
+        if not os.path.exists('data_processed/2_days/grid/grid_definition.parquet'):
              return jsonify([])
         
-        grid = pd.read_csv('data_processed/india_grid.csv')
+        grid = pd.read_parquet('data_processed/2_days/grid/grid_definition.parquet')
         if master_df is not None:
              # Just map some real data
             vis_df = master_df.copy()
@@ -232,7 +229,7 @@ def get_map_data():
             
             heatmap_data = []
             for _, row in merged.iterrows():
-                val = row.get('IMC_daily_total', 0)
+                val = row.get('rain_mm', 0)
                 if val > 0:
                     heatmap_data.append([
                         row['lat_center'],

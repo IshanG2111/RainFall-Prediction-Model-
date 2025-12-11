@@ -11,18 +11,17 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class RainfallPredictor:
-    def __init__(self, data_path='data_processed/master_dataset.parquet'):
+    def __init__(self, data_path='data_processed/2_days/finaldata/final_dataset.parquet'):
         """Initialize the rainfall prediction model"""
         self.data_path = data_path
         self.model = None
         self.scaler = StandardScaler()
-        # Added month and day_of_year to features for seasonality
+        # Updated features based on new dataset
         self.feature_columns = [
-            'HEM_daily', 'WDP_wind_mean', 'WDP_vorticity', 'WDP_shear',
-            'UTH_daily', 'OLR_daily', 'LST_mean', 'LST_max', 'CMP_cloud_mean',
+            'hem', 'wind_speed', 'uth', 'olr', 'lst_k', 'cer', 'cot',
             'month', 'day_of_year'
         ]
-        self.target_column = 'IMC_daily_total'
+        self.target_column = 'rain_mm'
         self.df = None
         self.metrics = {}
 
