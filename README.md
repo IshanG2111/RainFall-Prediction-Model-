@@ -10,39 +10,34 @@ This project implements an advanced AI-based rainfall prediction system using **
     *   **HEM** (Hydro-Estimator Rainfall)
     *   **OLR** (Outgoing Longwave Radiation)
     *   **UTH** (Upper Tropospheric Humidity)
-    *   **WDP** (Wind Derived Products - Speed, Vorticity, Shear)
-    *   **LST** (Land Surface Temperature)
-*   **Advanced Regression**: Predicts exact rainfall quantity using a Gradient Boosting model with Log-Transformation for high accuracy (**R² Step: ~0.76**).
+    *   **WDP** (Wind Derived Products - Speed)
+    *   **LST** (Land Surface Temperature / Cloud Top Temp)
+    *   **COT** (Cloud Optical Thickness)
+    *   **CER** (Cloud Effective Radius)
+*   **Advanced Regression**: Predicts exact rainfall quantity using a **HistGradientBoostingRegressor** with Log-Transformation for high accuracy.
 *   **Interactive UI**: Modern, glassmorphism-based interface with dynamic weather animations and detailed 7-day forecasts.
-*   **Realistic Simulation**: Simulates physically consistent weather patterns for future dates.
+*   **Geolocation**: Uses a 0.25° grid system to find the nearest weather data for selected cities.
 
 ## 🛠️ Setup & Installation
 
 1.  **Clone the repository** (if applicable).
 2.  **Install Dependencies**:
     ```bash
-    pip install flask pandas numpy scikit-learn
+    pip install -r requirements.txt
     ```
 
 ## 🏃‍♂️ How to Run
 
-Follow these steps to set up the data, train the model, and launch the application.
+Follow these steps to train the model and launch the application.
 
-### 1. Generate Dataset
-Generate the synthetic satellite dataset (physically correlated) to simulate realistic weather patterns.
-```bash
-python generate_data.py
-```
-*This creates `data_processed/master_dataset.parquet`.*
-
-### 2. Train the Model
-Train the HistGradientBoosting Regressor on the generated data.
+### 1. Train the Model
+Train the HistGradientBoosting Regressor on the processed dataset.
 ```bash
 python model.py
 ```
 *This saves the trained model and metrics to `models/model_frame_1.pkl`.*
 
-### 3. Start the Application
+### 2. Start the Application
 Launch the Flask web server.
 ```bash
 python app.py
@@ -51,11 +46,12 @@ python app.py
 
 ## 📂 Project Structure
 
-*   `app.py`: Main Flask application handling API requests and serving the frontend.
+*   `app.py`: Main Flask application handling API requests, grid lookup, and serving the frontend.
 *   `model.py`: Script to train the regression model and save artifacts.
-*   `generate_data.py`: Utility to generate correlated synthetic satellite data.
+*   `model_details.md`: Detailed documentation of model architecture and prediction logic.
+*   `requirements.txt`: List of Python dependencies.
 *   `templates/index.html`: The frontend user interface.
-*   `data_processed/`: Contains the spatial grid (`india_grid.csv`) and generated datasets.
+*   `data_processed/`: Contains the processed parquet datasets and grid definitions.
 *   `models/`: Stores the trained model binary (`.pkl`).
 
 ## 📊 Model Performance
