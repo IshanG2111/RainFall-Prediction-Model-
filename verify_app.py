@@ -9,14 +9,14 @@ def test_predictions():
     # 1. Test City
     print("\n--- Testing Prediction Endpoint (City) ---")
     data_city = {
-        "city": "Mumbai",
-        "date": "2024-07-20"
+        "city": "Bhubaneswar",
+        "date": "2025-07-15"
     }
     try:
         response = requests.post(f"{BASE_URL}/predict", json=data_city)
         if response.status_code == 200:
             result = response.json()
-            print("✅ Prediction Successful (City)")
+            print("✅ Prediction Successful")
             print(f"   Tomorrows Rain: {result['predictions'][0]['Predicted_Rainfall']}")
         else:
             print(f"❌ Failed: {response.status_code} - {response.text}")
@@ -28,7 +28,7 @@ def test_predictions():
     data_coords = {
         "latitude": 20.5937,
         "longitude": 78.9629,
-        "date": "2024-07-20"
+        "date": "2025-07-15"
     }
     try:
         response = requests.post(f"{BASE_URL}/predict", json=data_coords)
