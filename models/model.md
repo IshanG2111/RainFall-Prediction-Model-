@@ -39,8 +39,8 @@ The model consumes 9 input features, primarily derived from **INSAT-3DR** satell
 - **Validation**: 80/20 Train-Test split.
 
 ## Performance
-- **R² Score**: ~0.92 (Explains 92% of the variance in rainfall).
-- **RMSE**: ~6.9 mm (Average error margin).
+- **R² Score**: 0.9268 (Explains ~92.7% of the variance in rainfall).
+- **RMSE**: 6.8990 mm (Average error margin).
 
 ## Inference Workflow (Prediction)
 1.  **Input**: City/Grid Location + Date.
