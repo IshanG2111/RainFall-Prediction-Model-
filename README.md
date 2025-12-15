@@ -14,6 +14,9 @@ This project implements an advanced AI-based rainfall prediction system using **
     *   **LST** (Land Surface Temperature / Cloud Top Temp)
     *   **COT** (Cloud Optical Thickness)
     *   **CER** (Cloud Effective Radius)
+*   **Temporal Features**: Incorporates time-aware features:
+    *   **Cyclic Time**: Day of Year (Sine/Cosine), Week of Year (Sine/Cosine)
+    *   **Lag Features**: Historic rainfall data (3-day and 7-day lags)
 *   **Advanced Regression**: Predicts exact rainfall quantity using a **HistGradientBoostingRegressor** with Log-Transformation for high accuracy.
 *   **Interactive UI**: Modern, glassmorphism-based interface with dynamic weather animations and detailed 7-day forecasts.
 *   **Geolocation**: Uses a 0.25° grid system to find the nearest weather data for selected cities.

@@ -23,23 +23,9 @@ def test_predictions():
     except Exception as e:
         print(f"Error: {e}")
 
-    # 2. Test Coordinates
-    print("\n--- Testing Prediction Endpoint (Coordinates) ---")
-    data_coords = {
-        "latitude": 20.5937,
-        "longitude": 78.9629,
-        "date": "2025-07-15"
-    }
-    try:
-        response = requests.post(f"{BASE_URL}/predict", json=data_coords)
-        if response.status_code == 200:
-            result = response.json()
-            print("✅ Prediction Successful (Coordinates)")
-            print(f"   Tomorrows Rain: {result['predictions'][0]['Predicted_Rainfall']}")
-        else:
-            print(f"❌ Failed: {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"Error: {e}")
+    # 2. Test Coordinates - REMOVED (Not supported by current API)
+    # The current app.py implementation solely relies on City Name to derive coordinates.
+    # Passing raw coordinates is not currently implemented in the /predict endpoint.
 
 if __name__ == "__main__":
     test_predictions()
