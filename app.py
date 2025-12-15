@@ -144,10 +144,11 @@ def predict():
         predictions = []
         current_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d")
         
-        # Feature columns must match training exactly
+        # Feature columns must match training exactly - Updated to match model.py
         feature_cols = [
             'hem', 'wind_speed', 'uth', 'olr', 'lst_k', 'cer', 'cot',
-            'month', 'day_of_year'
+            'day_sin', 'day_cos', 'week_sin', 'week_cos',
+            'rain_lag_3', 'rain_lag_7'
         ]
 
         for i in range(7):
@@ -156,24 +157,35 @@ def predict():
             # 1. Get Base Satellite Features
             features_dict = get_realistic_features(grid_id)
             
-            # 2. Add Time Features
-            features_dict['month'] = date_target.month
-            features_dict['day_of_year'] = date_target.timetuple().tm_yday
+            # 2. Add Time Features (Cyclic)
+            day_of_year = date_target.timetuple().tm_yday
+            week_of_year = date_target.isocalendar()[1]
             
-            # 3. Create DataFrame for Input
+            features_dict['day_sin'] = np.sin(2 * np.pi * day_of_year / 366)
+            features_dict['day_cos'] = np.cos(2 * np.pi * day_of_year / 366)
+            features_dict['week_sin'] = np.sin(2 * np.pi * week_of_year / 53)
+            features_dict['week_cos'] = np.cos(2 * np.pi * week_of_year / 53)
+            
+            # 3. Add Lag Features (Approximation for Demo)
+            # ideally we look up past dates, but for demo we can use defaults or random small values
+            # Using 0 or low values assumes dry spell preceding, which is safer than assuming heavy rain
+            features_dict['rain_lag_3'] = features_dict.get('rain_mm', 0) * np.random.uniform(0, 0.5) 
+            features_dict['rain_lag_7'] = features_dict.get('rain_mm', 0) * np.random.uniform(0, 0.5)
+
+            # 4. Create DataFrame for Input
             input_data = [features_dict.get(col, 0) for col in feature_cols]
             input_df = pd.DataFrame([input_data], columns=feature_cols)
             
-            # 4. Scale Features
+            # 5. Scale Features
             if scaler:
                 input_df_scaled = scaler.transform(input_df)
             else:
                 input_df_scaled = input_df
             
-            # 5. Predict (Log Scale)
+            # 6. Predict (Log Scale)
             pred_log = model.predict(input_df_scaled)[0]
             
-            # 6. Inverse Transform (expm1)
+            # 7. Inverse Transform (expm1)
             pred_rainfall = np.expm1(pred_log)
             pred_rainfall = max(0, pred_rainfall)
             
