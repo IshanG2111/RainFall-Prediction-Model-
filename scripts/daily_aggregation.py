@@ -165,20 +165,18 @@ def process_wdp_daily(date_str):
 # 3.3 — LST (Kelvin)
 
 def aggregate_lst(grid_id, values, date):
-    df = pd.DataFrame({"grid_id": grid_id, "value": values})
-    out = df.groupby("grid_id")["value"].mean().reset_index()
+    df = pd.DataFrame({"grid_id": grid_id, "lst_k": values})
+    out = df.groupby("grid_id")["lst_k"].mean().reset_index()
 
-    # insert missing grid rows (keep NaN)
+    # Insert missing grid rows (keep NaN)
     full_grid = grid[["grid_id", "lat_center", "lon_center"]].copy()
     full_grid["date"] = date
 
     out = full_grid.merge(out, on="grid_id", how="left")
-
-    return out   # DON'T fillna(0)
+    return out
 
 def process_lst_daily(date_str):
 
-    # Find all LST files for this date
     pattern = os.path.join(RAW_DIR, "lst", f"*{date_str}*_L2B_LST_*.h5")
     files = sorted(glob.glob(pattern))
 
@@ -186,9 +184,9 @@ def process_lst_daily(date_str):
         print(f"No LST files for {date_str}")
         return None
 
-    acc = None
+    sum_acc = None
+    count_acc = None
     lat2d = lon2d = None
-    valid_count = 0
 
     for fp in files:
         with h5py.File(fp, "r") as h:
@@ -196,49 +194,50 @@ def process_lst_daily(date_str):
             # Read raw LST
             arr = h["LST"][0].astype(float)
 
-            # Replace missing pixels (-999) with NaN
+            # Replace fill values with NaN
             arr[arr == -999] = np.nan
 
-            # Skip frames with no valid LST (night/cloudy)
+            # Skip completely invalid frames
             if np.all(np.isnan(arr)):
-                print("Skipping invalid or nighttime LST:", os.path.basename(fp))
                 continue
 
             H, W = arr.shape
 
-            # Rebuild INSAT lat/lon grid from attributes
+            # Build lat/lon grid once
             if lat2d is None:
                 lat2d, lon2d = build_latlon_from_attrs(h, H, W)
 
-            # Smart accumulation: keep valid pixels only
-            if acc is None:
-                acc = arr
-            else:
-                # Combine valid pixels: prefer valid arr pixels over NaN in acc
-                acc = np.where(np.isnan(acc) & ~np.isnan(arr), arr,
-                       np.where(~np.isnan(acc) & np.isnan(arr), acc,
-                                np.where(~np.isnan(acc) & ~np.isnan(arr), acc + arr, np.nan)))
+            # Initialize accumulators
+            if sum_acc is None:
+                sum_acc = np.zeros_like(arr, dtype=float)
+                count_acc = np.zeros_like(arr, dtype=np.int32)
 
-            valid_count += 1
+            # Valid mask
+            valid_mask = ~np.isnan(arr)
+
+            # Accumulate
+            sum_acc[valid_mask] += arr[valid_mask]
+            count_acc[valid_mask] += 1
 
     # If nothing valid found
-    if valid_count == 0:
+    if sum_acc is None:
         print(f"No valid LST for {date_str}")
         return None
 
-    # Compute daily mean (only over available valid frames)
-    daily_lst = acc / valid_count
+    # Compute daily mean (pixel-wise)
+    daily_lst = np.full_like(sum_acc, np.nan, dtype=float)
+    valid_pixels = count_acc > 0
+    daily_lst[valid_pixels] = sum_acc[valid_pixels] / count_acc[valid_pixels]
 
     # Clip to India
     lat_i, lon_i, lst_i = clip_to_india(lat2d, lon2d, daily_lst)
     grid_id = map_to_grid(lat_i, lon_i)
 
-    # Aggregate (do NOT fill NaN!)
+    # Aggregate to grid (do NOT fill NaN)
     date = datetime.strptime(date_str, "%d%b%Y").date()
     out = aggregate_lst(grid_id, lst_i, date)
-    out = out.rename(columns={"value": "lst_k"})
 
-    return save_daily(out, "lst", out["date"].iloc[0])
+    return save_daily(out, "lst", date)
 
 # 3.4 — CMP (CER + COT)
 
