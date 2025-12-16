@@ -13,7 +13,7 @@ print("BASE_DIR:", BASE_DIR)
 print("RAW_DIR:", RAW_DIR)
 print("PROC_DIR:", PROC_DIR)
 
-grid = pd.read_parquet(os.path.join(PROC_DIR, "grid", "grid_definition.parquet"))
+grid = pd.read_parquet("../data_processed/grid/grid_definition.parquet")
 
 LAT_MIN, LAT_MAX = 6.0, 38.0
 LON_MIN, LON_MAX = 68.0, 98.0
