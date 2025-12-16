@@ -220,7 +220,12 @@ def predict():
             
         return jsonify({
             'predictions': predictions,
-            'model_metrics': metrics
+            'model_metrics': metrics,
+            'grid_info': {
+                'grid_id': int(grid_id),
+                'latitude': float(grid_cell['lat_center']),
+                'longitude': float(grid_cell['lon_center'])
+            }
         })
 
     except Exception as e:
