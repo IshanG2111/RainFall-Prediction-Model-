@@ -171,7 +171,7 @@ def impute_lst(df):
 def apply_imputation(df):
 
     # (A) TARGET IMC → Drop missing
-    df = df.dropna(subset=["rain_mm"])
+    # df = df.dropna(subset=["rain_mm"])
     print("Dropped rows with missing IMC.")
 
     # (B) Spatial imputation for derived variables
