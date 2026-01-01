@@ -5,8 +5,8 @@ import numpy as np
 
 # PATHS
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MASTER_DIR = os.path.join(BASE_DIR, "data_processed", "2_days", "master_daily")
-FINAL_DIR  = os.path.join(BASE_DIR, "data_processed", "2_days", "finaldata")
+MASTER_DIR = os.path.join(BASE_DIR, "data_processed", "", "master_daily")
+FINAL_DIR  = os.path.join(BASE_DIR, "data_processed", "", "finaldata")
 os.makedirs(FINAL_DIR, exist_ok=True)
 
 # 4.1 LOAD ALL MASTER FILES

@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROC_DIR = os.path.join(BASE_DIR, "data_processed", "2_days")
+PROC_DIR = os.path.join(BASE_DIR, "data_processed", "")
 
 def load_daily(prefix, date):
     """Load daily parquet for one parameter."""

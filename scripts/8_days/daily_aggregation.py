@@ -5,15 +5,15 @@ import pandas as pd
 from datetime import datetime
 import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RAW_DIR  = os.path.join(BASE_DIR, "data_raw", "2_days")
-PROC_DIR = os.path.join(BASE_DIR, "data_processed", "2_days")
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# RAW_DIR  = os.path.join(BASE_DIR, "data_raw", "")
+# PROC_DIR = os.path.join(BASE_DIR, "data_processed", "")
+#
+# print("BASE_DIR:", BASE_DIR)
+# print("RAW_DIR:", RAW_DIR)
+# print("PROC_DIR:", PROC_DIR)
 
-print("BASE_DIR:", BASE_DIR)
-print("RAW_DIR:", RAW_DIR)
-print("PROC_DIR:", PROC_DIR)
-
-grid = pd.read_parquet("../data_processed/grid/grid_definition.parquet")
+grid = pd.read_parquet("../../data_processed/grid/grid_definition.parquet")
 
 LAT_MIN, LAT_MAX = 6.0, 38.0
 LON_MIN, LON_MAX = 68.0, 98.0
@@ -44,18 +44,15 @@ def build_latlon_from_attrs(h, H, W):
 
 def clip_to_india(lat2d, lon2d, data):
     """Return flattened arrays clipped to India bounding box."""
-    mask = (
-        (lat2d >= LAT_MIN) & (lat2d <= LAT_MAX) &
-        (lon2d >= LON_MIN) & (lon2d <= LON_MAX)
-    )
+    mask = ((lat2d >= LAT_MIN) & (lat2d <= LAT_MAX) & (lon2d >= LON_MIN) & (lon2d <= LON_MAX))
     return lat2d[mask], lon2d[mask], data[mask]
 
 
 def map_to_grid(lat_i, lon_i):
     """Convert clipped lat/lon → grid_id."""
-    row = ((lat_i - LAT_MIN) / GRID_STEP).astype(int)
-    col = ((lon_i - LON_MIN) / GRID_STEP).astype(int)
-    return row * NUM_COLS + col
+    row = np.clip(((lat_i - LAT_MIN) / GRID_STEP).astype(int), 0, NUM_ROWS - 1)
+    col = np.clip(((lon_i - LON_MIN) / GRID_STEP).astype(int), 0, NUM_COLS - 1)
+    return row * NUM_COLS + col + 1
 
 
 def aggregate_and_fix_missing(grid_id, values, date):
@@ -75,7 +72,7 @@ def aggregate_and_fix_missing(grid_id, values, date):
 
 def save_daily(out_df, prefix, date):
     """Save to parquet with consistent folder structure."""
-    save_dir = f"../data_processed/2_days/{prefix}_daily"
+    save_dir = f"../../data_processed/8_days/{prefix}_daily"
     os.makedirs(save_dir, exist_ok=True)
 
     outpath = f"{save_dir}/{prefix}_{date}.parquet"
@@ -88,7 +85,7 @@ def save_daily(out_df, prefix, date):
 
 def process_imc_daily(date_str):
 
-    pattern = f"../data_raw/2_days/imc/3RIMG_{date_str}_*_L2B_IMC_*.h5"
+    pattern = f"../../data_raw/8_days/imc/3RIMG_{date_str}_*_L2B_IMC_*.h5"
     files = sorted(glob.glob(pattern))
 
     if len(files) == 0:
@@ -122,7 +119,7 @@ def process_imc_daily(date_str):
 # 3.2 — WDP (Wind → Wind Speed)
 
 def process_wdp_daily(date_str):
-    pattern = f"../data_raw/2_days/wdp/*{date_str}*_L2G_WDP_*.h5"
+    pattern = f"../../data_raw/8_days/wdp/*{date_str}*_L2G_WDP_*.h5"
     files = sorted(glob.glob(pattern))
 
     if not files:
@@ -177,7 +174,7 @@ def aggregate_lst(grid_id, values, date):
 
 def process_lst_daily(date_str):
 
-    pattern = os.path.join(RAW_DIR, "lst", f"*{date_str}*_L2B_LST_*.h5")
+    pattern = f"../../data_raw/8_days/lst/*{date_str}*_L2B_LST_*.h5"
     files = sorted(glob.glob(pattern))
 
     if not files:
@@ -243,7 +240,7 @@ def process_lst_daily(date_str):
 
 def process_cmp_daily(date_str):
 
-    pattern = f"../data_raw/2_days/cmp/*{date_str}*_L2C_CMP_*.h5"
+    pattern = f"../../data_raw/8_days/cmp/*{date_str}*_L2C_CMP_*.h5"
     files = sorted(glob.glob(pattern))
 
     if not files:
@@ -292,8 +289,8 @@ def process_cmp_daily(date_str):
     full_grid["date"] = datetime.strptime(date_str, "%d%b%Y").date()
 
     out = full_grid.merge(out, on="grid_id", how="left")
-    out["cer"] = out["cer"].fillna(0)
-    out["cot"] = out["cot"].fillna(0)
+    # out["cer"] = out["cer"].fillna(0)
+    # out["cot"] = out["cot"].fillna(0)
 
     return save_daily(out, "cmp", out["date"].iloc[0])
 
@@ -301,7 +298,7 @@ def process_cmp_daily(date_str):
 
 def process_uth_daily(date_str):
 
-    fp = f"../data_raw/2_days/uth/3RIMG_{date_str}_*_L3B_UTH_DLY_*.h5"
+    fp = f"../../data_raw/8_days/uth/3RIMG_{date_str}_*_L3B_UTH_DLY_*.h5"
     files = sorted(glob.glob(fp))
 
     if not files:
@@ -325,7 +322,7 @@ def process_uth_daily(date_str):
 
 def process_olr_daily(date_str):
 
-    fp = f"../data_raw/2_days/olr/3RIMG_{date_str}_*_L3B_OLR_DLY_*.h5"
+    fp = f"../../data_raw/8_days/olr/3RIMG_{date_str}_*_L3B_OLR_DLY_*.h5"
     files = sorted(glob.glob(fp))
 
     if not files:
@@ -349,7 +346,7 @@ def process_olr_daily(date_str):
 
 def process_hem_daily(date_str):
 
-    fp = f"../data_raw/2_days/hem/3RIMG_{date_str}_*_L3B_HEM_DLY_*.h5"
+    fp = f"../../data_raw/8_days/hem/3RIMG_{date_str}_*_L3B_HEM_DLY_*.h5"
     files = sorted(glob.glob(fp))
 
     if not files:
@@ -371,7 +368,7 @@ def process_hem_daily(date_str):
 
 if __name__ == "__main__":
 
-    dates = ["15JUL2025", "16JUL2025"]
+    dates = ["15JAN2025", "21MAY2025", "10JUN2025", "20JUL2025", "25JUL2025", "15AUG2025", "20SEP2025", "10NOV2025"]
 
     for d in dates:
         print("\n======================")
