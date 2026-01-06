@@ -5,14 +5,6 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# RAW_DIR  = os.path.join(BASE_DIR, "data_raw", "")
-# PROC_DIR = os.path.join(BASE_DIR, "data_processed", "")
-#
-# print("BASE_DIR:", BASE_DIR)
-# print("RAW_DIR:", RAW_DIR)
-# print("PROC_DIR:", PROC_DIR)
-
 grid = pd.read_parquet("../../data_processed/grid/grid_definition.parquet")
 
 LAT_MIN, LAT_MAX = 6.0, 38.0
@@ -23,7 +15,6 @@ NUM_ROWS = int((LAT_MAX - LAT_MIN) / GRID_STEP)      # 128
 NUM_COLS = int((LON_MAX - LON_MIN) / GRID_STEP)      # 120
 
 # HELPER FUNCTIONS — USED BY ALL PRODUCTS
-
 def build_latlon_from_attrs(h, H, W):
     """Reconstruct correct INSAT geolocation grid."""
     upper_lat = h.attrs["upper_latitude"][0]
@@ -82,7 +73,6 @@ def save_daily(out_df, prefix, date):
     return out_df
 
 # 3.1 — IMC (Rainfall)
-
 def process_imc_daily(date_str):
 
     pattern = f"../../data_raw/8_days/imc/3RIMG_{date_str}_*_L2B_IMC_*.h5"
@@ -117,7 +107,6 @@ def process_imc_daily(date_str):
     return save_daily(out, "imc", out["date"].iloc[0])
 
 # 3.2 — WDP (Wind → Wind Speed)
-
 def process_wdp_daily(date_str):
     pattern = f"../../data_raw/8_days/wdp/*{date_str}*_L2G_WDP_*.h5"
     files = sorted(glob.glob(pattern))
@@ -160,7 +149,6 @@ def process_wdp_daily(date_str):
     return save_daily(out, "wdp", out["date"].iloc[0])
 
 # 3.3 — LST (Kelvin)
-
 def aggregate_lst(grid_id, values, date):
     df = pd.DataFrame({"grid_id": grid_id, "lst_k": values})
     out = df.groupby("grid_id")["lst_k"].mean().reset_index()
@@ -237,7 +225,6 @@ def process_lst_daily(date_str):
     return save_daily(out, "lst", date)
 
 # 3.4 — CMP (CER + COT)
-
 def process_cmp_daily(date_str):
 
     pattern = f"../../data_raw/8_days/cmp/*{date_str}*_L2C_CMP_*.h5"
@@ -295,7 +282,6 @@ def process_cmp_daily(date_str):
     return save_daily(out, "cmp", out["date"].iloc[0])
 
 # 3.5 — UTH (already daily)
-
 def process_uth_daily(date_str):
 
     fp = f"../../data_raw/8_days/uth/3RIMG_{date_str}_*_L3B_UTH_DLY_*.h5"
@@ -319,7 +305,6 @@ def process_uth_daily(date_str):
     return save_daily(out, "uth", out["date"].iloc[0])
 
 # 3.6 — OLR (already daily)
-
 def process_olr_daily(date_str):
 
     fp = f"../../data_raw/8_days/olr/3RIMG_{date_str}_*_L3B_OLR_DLY_*.h5"
@@ -343,7 +328,6 @@ def process_olr_daily(date_str):
     return save_daily(out, "olr", out["date"].iloc[0])
 
 # 3.7 — HEM (mm/day already)
-
 def process_hem_daily(date_str):
 
     fp = f"../../data_raw/8_days/hem/3RIMG_{date_str}_*_L3B_HEM_DLY_*.h5"

@@ -38,14 +38,7 @@ def merge_all_daily(date_str):
     master = imc.copy()
 
     # Merge all remaining datasets
-    datasets = {
-        "wdp": wdp,
-        "lst": lst,
-        "cmp": cmp,
-        "uth": uth,
-        "olr": olr,
-        "hem": hem
-    }
+    datasets = {"wdp": wdp,"lst": lst,"cmp": cmp,"uth": uth,"olr": olr,"hem": hem}
 
     for name, df in datasets.items():
         if df is not None:
