@@ -3,12 +3,12 @@ import glob
 import pandas as pd
 from datetime import datetime
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PROC_DIR = os.path.join(BASE_DIR, "data_processed", "")
 
 def load_daily(prefix, date):
     """Load daily parquet for one parameter."""
-    folder = os.path.join(PROC_DIR, f"{prefix}_daily")
+    folder = os.path.join(PROC_DIR, "8_days", f"{prefix}_daily")
     pattern = os.path.join(folder, f"{prefix}_{date}.parquet")
     files = glob.glob(pattern)
 
@@ -62,7 +62,7 @@ def merge_all_daily(date_str):
     master = master.sort_values(["date", "grid_id"]).reset_index(drop=True)
 
     # Save master output
-    save_dir = os.path.join(PROC_DIR, "master_daily")
+    save_dir = os.path.join(PROC_DIR, "8_days", "master_daily")
     os.makedirs(save_dir, exist_ok=True)
 
     outpath = os.path.join(save_dir, f"master_raw_{date_str}.parquet")
@@ -73,7 +73,7 @@ def merge_all_daily(date_str):
 
 
 if __name__ == "__main__":
-    dates = ["2025-07-15", "2025-07-16"]
+    dates = ["2025-01-15","2025-05-21","2025-06-10","2025-07-20","2025-07-25","2025-08-15","2025-09-20","2025-11-10"]
 
     for d in dates:
         print("\n=================================")

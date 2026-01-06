@@ -225,7 +225,7 @@ Shape of final dataset:
 (30718 rows, 18 columns)
 ```
 ---
-## File Structure After Phase 1
+## File Structure For Phase 1
 ```
 data_processed/
 └── 2_days/
