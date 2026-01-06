@@ -15,16 +15,6 @@ This ensures everything works perfectly before scaling.
 
 ### **1.2 Downloaded Datasets**
 All required datasets were downloaded and stored under:
-```
-data_raw/
-├── imc/
-├── wdp/
-├── lst/
-├── cmp/
-├── uth/
-├── olr/
-└── hem/
-```
 
 ### **Datasets Used**
 
@@ -38,9 +28,8 @@ data_raw/
 | OLR     | 3RIMG_L3B_OLR_DLY | Daily       | Convection indicator        |
 | HEM     | 3RIMG_L3B_HEM_DLY | Daily       | Daily rainfall (auxiliary)  |
 
-Total files downloaded: **336 files**
 
-### **1.3 Verified All 7 Sample Files**
+### **1.3 Verified All Sample Files**
 Verified HDF5 structure for:
 
 - IMC  
@@ -59,23 +48,6 @@ Checked:
 - Product consistency  
 
 All files are valid and match MOSDAC standards.
-
-### **1.4 Generated manifest_2d.csv**
-Created a complete file manifest containing:
-
-- `product`
-- `filename`
-- `timestamp`
-- `resolution`
-- `variables`
-- `size_MB`
-
-Saved as:
-```
-data_processed/2_days/manifest.csv
-```
-
-This manifest serves as the **master index** for Phase 1 and future phases.
 
 ---
 
@@ -108,9 +80,7 @@ Each grid cell is defined by 4 boundaries And two midpoints:
 ### **2.5 Save grid_definition.parquet**
 All grid cell boundaries and centers are compiled into
 a single Parquet file:
-```
-data_processed/2_days/grid/grid_definition.parquet
-```
+
 This file contains:
 
 - grid_id
@@ -130,59 +100,28 @@ model training, and backend prediction services.
 
 ### **3.1 IMC Daily Processing**
 Processes INSAT-3DR IMC rainfall (mm/hr) by reconstructing geolocation from satellite metadata, converting half-hourly rain rates into daily rainfall totals, clipping to the India domain, mapping to the 0.25° India grid, and generating a complete daily rainfall field with 15,360 grid cells.
-```
-data_processed/2_days/imc_daily/imc_2025-07-15.parquet
-data_processed/2_days/imc_daily/imc_2025-07-16.parquet
-```
 
 ### **3.2 WDP Daily Processing**
 Processes INSAT-3DR WDP wind data (U/V components). Extracts surface-level winds, computes wind speed magnitude, reprojects the WDP grid to the 0.25° India grid, and produces a daily-mean wind speed dataset.
-```
-data_processed/2_days/wdp_daily/wdp_2025-07-15.parquet
-data_processed/2_days/wdp_daily/wdp_2025-07-16.parquet
-```
 
 ### **3.3 LST Daily Processing**
 Processes INSAT-3DR Land Surface Temperature (LST in Kelvin). Reconstructs full-disk geolocation from satellite attributes, clips to India, performs daily averaging of temperature, and maps the dataset onto the unified 0.25° India grid.
-```
-data_processed/2_days/lst_daily/lst_2025-07-15.parquet
-data_processed/2_days/lst_daily/lst_2025-07-16.parquet
-```
 
 ### **3.4 CMP Daily Processing**
 Processes INSAT-3DR Cloud Microphysics fields. Extracts both Cloud Effective Radius (CER) and Cloud Optical Thickness (COT), applies scale factors, reconstructs geolocation, aligns to the 0.25° grid, and generates daily-mean CER and COT grids.
-```
-data_processed/2_days/cmp_daily/cmp_2025-07-15.parquet
-data_processed/2_days/cmp_daily/cmp_2025-07-16.parquet
-```
 
 ### **3.5 UTH Daily Processing**
 Processes daily Upper Tropospheric Humidity (already binned daily by IMD). Reprojects the satellite grid using metadata, clips to India, maps values onto the 0.25° India grid, and outputs a complete daily UTH field.
-```
-data_processed/2_days/uth_daily/uth_2025-07-15.parquet
-data_processed/2_days/uth_daily/uth_2025-07-16.parquet
-```
+
 
 ### **3.6 OLR Daily Processing**
 Processes daily Outgoing Longwave Radiation (OLR). Utilizes INSAT-3DR's daily binned radiative flux product, reconstructs lat/lon grids, maps to the 0.25° India grid, and generates a daily OLR dataset used as a key convective indicator.
-```
-data_processed/2_days/olr_daily/olr_2025-07-15.parquet
-data_processed/2_days/olr_daily/olr_2025-07-16.parquet
-```
 
 ### **3.7 HEM Daily Processing**
 Processes INSAT-3DR HEM daily precipitation (mm/day). Uses the already-binned daily rainfall total, reconstructs geolocation, maps to the 0.25° grid, and outputs a complete daily rainfall field complementary to IMC.
-```
-data_processed/2_days/hem_daily/hem_2025-07-15.parquet
-data_processed/2_days/hem_daily/hem_2025-07-16.parquet
-```
 
 ### **3.8 Merging all datasets**
 This step merges all the processed daily satellite products (IMC, WDP, LST, CMP, UTH, OLR, HEM) into a single unified daily dataset. The merge is performed on grid_id and date, producing a complete feature table with 15,360 grid cells per day. No ML-specific preprocessing is done at this stage; the output serves as the raw feature layer for Step 4.
-```
-data_processed/2_days/daily_merged/daily_2025-07-15.parquet
-data_processed/2_days/daily_merged/daily_2025-07-16.parquet
-```
 
 ---
 
@@ -273,9 +212,7 @@ This results in a fully filled, physically consistent dataset suitable for ML.
 ### **4.7 Save Final Merged Dataset**
 After all merging, engineering, and imputation:
 The final dataframe is saved to
-```
-data_processed/2_days/finaldata/final_dataset.parquet
-```
+
 This final dataset has:
 - All grid cells for each date 
 - Zero missing values 
@@ -286,4 +223,38 @@ This final dataset has:
 Shape of final dataset:
 ```
 (30718 rows, 18 columns)
+```
+---
+## File Structure For Phase 1
+```
+data_processed/
+└── 2_days/
+    └── cmp_daily/
+        ├── cmp_2025-07-15.parquet
+        └── cmp_2025-07-16.parquet
+    └── finaldata/
+        ├── final_dataset.parquet
+    └── hem_daily/
+        ├── hem_2025-07-15.parquet
+        └── hem_2025-07-16.parquet
+    └── imc_daily/
+        ├── imc_2025-07-15.parquet
+        └── imc_2025-07-16.parquet
+    └── lst_daily/
+        ├── lst_2025-07-15.parquet
+        └── lst_2025-07-16.parquet
+    └── master_daily/
+        ├── master_raw_2025-07-15.parquet
+        └── master_raw_2025-07-16.parquet
+    └── olr_daily/
+        ├── olr_2025-07-15.parquet
+        └── olr_2025-07-16.parquet
+    └── uth_daily/
+        ├── uth_2025-07-15.parquet
+        └── uth_2025-07-16.parquet
+    └── wdp_daily/
+        ├── wdp_2025-07-15.parquet
+        └── wdp_2025-07-16.parquet
+└── grid/
+    ├── grid_definition.parquet
 ```
