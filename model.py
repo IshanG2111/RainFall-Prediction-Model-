@@ -8,7 +8,128 @@ import pickle
 import os
 import warnings
 
+import warnings
+
 warnings.filterwarnings('ignore')
+
+class PhysicsConstraints:
+    """
+    Handles physics-based constraints and sanity checks for the Rainfall Model.
+    Ref: Physics-Based Rules for Rainfall Prediction (Indian Context)
+    """
+    
+    @staticmethod
+    def apply_hard_clamps(df, is_processed=False):
+        """
+        Apply hard physical clamps to the dataframe.
+        Used for both training (data cleaning) and inference (post-processing).
+        
+        Args:
+            df (pd.DataFrame): Dataframe with features (hem, olr, uth, etc.) and 'rain_mm' (if training/cleaning).
+            is_processed (bool): If True, assumes input is processed features ready for inference. 
+                                 If False, assumes raw data during cleaning.
+        """
+        # We need specific columns. If they are missing, we skip those rules or warn.
+        # Required: olr, uth, wind_speed, lst_k, cer, cot
+        # Optional: rain_mm, date/month (for seasonal rules), lat/lon (for spatial rules)
+        
+        # Working with a copy to avoid SettingWithCopy warnings on slices if any
+        df = df.copy()
+        
+        # --- 1. Warm Rain Fix (OLR) ---
+        # Rule: OLR > 260 => Rain = 0
+        mask_warm_rain = df['olr'] > 260
+        if 'rain_mm' in df.columns:
+            df.loc[mask_warm_rain, 'rain_mm'] = 0
+            
+        # --- 2. Warm Cloud Moisture Check ---
+        # Rule: OLR > 200 AND UTH < 40% => Rain <= 5
+        mask_warm_dry = (df['olr'] > 200) & (df['uth'] < 40)
+        if 'rain_mm' in df.columns:
+            df.loc[mask_warm_dry, 'rain_mm'] = df.loc[mask_warm_dry, 'rain_mm'].clip(upper=5)
+            
+        # --- 3. Haze Filter (Aerosol) ---
+        # Rule: COT < 8 => Rain <= 2
+        feature_cot = 'cot' if 'cot' in df.columns else None
+        if feature_cot:
+            mask_haze = df[feature_cot] < 8
+            if 'rain_mm' in df.columns:
+                df.loc[mask_haze, 'rain_mm'] = df.loc[mask_haze, 'rain_mm'].clip(upper=2)
+                
+        return df
+
+    @staticmethod
+    def get_regime(row):
+        """
+        Determine the meteorological regime based on OLR, UTH, etc.
+        Returns: Str (Regime Name)
+        """
+        olr = row.get('olr', 300)
+        
+        if olr > 260:
+            return "Clear/Haze"
+        elif 220 <= olr <= 260:
+            # Check UTH for Shallow Monsoon vs just Warm
+            uth = row.get('uth', 0)
+            if uth >= 70: 
+                return "Shallow Monsoon"
+            return "Warm Cloud"
+        elif 140 <= olr < 190:
+            return "Deep Convection"
+        elif olr < 140:
+            return "Cyclone/Storm"
+        
+        return "Transitional"
+
+    @staticmethod
+    def apply_post_inference_adjustments(prediction, features):
+        """
+        Apply sanity checks and adjustments to a single prediction result.
+        
+        Args:
+            prediction (float): The raw predicted rainfall (mm).
+            features (dict): The input features used for prediction. 
+                             Must include: lat, lon, month, olr, uth, etc.
+        
+        Returns:
+            float: Adjusted rainfall prediction.
+            str: Status/Reason for adjustment (optional)
+        """
+        final_rain = prediction
+        reason = "Model Raw"
+        
+        lat = features.get('latitude', 0)
+        lon = features.get('longitude', 0)
+        month = features.get('month', 1) 
+        olr = features.get('olr', 250)
+        uth = features.get('uth', 50)
+        elevation = features.get('elevation', 0) # Assuming we might have this, else 0
+        
+        # --- Hard Clamps (Redundant safeguard) ---
+        if olr > 260:
+            return 0.0, "Physical Clamp (OLR > 260)"
+            
+        if olr > 200 and uth < 40:
+            final_rain = min(final_rain, 5.0)
+            reason = "Physical Clamp (Warm/Dry)"
+
+        # --- Sanity: Desert Check ---
+        # IF Lat > 24°N AND Lon < 73°E (Rajasthan) AND Month != {Jul, Aug}
+        is_rajasthan = (lat > 24) and (lon < 73)
+        is_monsoon = month in [7, 8]
+        if is_rajasthan and not is_monsoon:
+            if final_rain > 10:
+                final_rain *= 0.1 # Aggressive dampen
+                reason = "Desert Sanity Filter"
+
+        # --- Sanity: Winter Dryness ---
+        # Month {12, 1} AND Lat > 15°N => Rain <= 20
+        if month in [12, 1] and lat > 15:
+            if final_rain > 20:
+                final_rain = 20.0
+                reason = "Winter Dryness Clamp"
+
+        return final_rain, reason
 
 class RainfallPredictor:
     def __init__(self, data_path='data_processed/2_days/finaldata/final_dataset.parquet'):
@@ -61,7 +182,11 @@ class RainfallPredictor:
             if col in self.df.columns:
                 self.df[col] = self.df[col].clip(lower=min_val, upper=max_val)
 
-        # Drop rows with NaN in critical columns after clipping (though clip handles NaNs by ignoring usually, we need to be safe)
+        # Apply Physics-Based Hard Clamps (Training Phase)
+        # This removes/fixes physically impossible data points from the training set
+        self.df = PhysicsConstraints.apply_hard_clamps(self.df)
+
+        # Drop rows with NaN in critical columns after clipping
         self.df = self.df.dropna(subset=self.raw_features + [self.target_column])
         print(f"Data after cleaning: {len(self.df)} records")
 
@@ -92,28 +217,17 @@ class RainfallPredictor:
         self.df['week_sin'] = np.sin(2 * np.pi * self.df['week_of_year'] / 53)
         self.df['week_cos'] = np.cos(2 * np.pi * self.df['week_of_year'] / 53)
 
+
         # --- Lag Features ---
-        # Lag of target (rain_mm) and potentially others. For now, just rain lag as requested for "key predictors"
-        # Since we might treat rows as a continuous time series for a single location, 
-        # BUT the dataset might be multi-location (spatial). 
-        # If spatial, simple shift works only if grouped by location.
-        # Assuming the dataset is a mix or we treat it as one series for simplicity per prompt "lag-feature generation".
-        # Better approach: If 'location' or 'grid_id' exists, group by it.
-        # Checking dataset columns... assuming we can just shift for now or if it's single location.
-        # Let's check if there is a location identifier. If not, simple shift might be improper if data is shuffled.
-        # But we sorted by date. If multiple locations exist for same date, shift is messy.
-        # However, as per prompt, I will implement simple lags.
-        
-        for lag in [3, 7]:
-            self.df[f'rain_lag_{lag}'] = self.df['rain_mm'].shift(lag)
-        
-        # Drop rows with NaNs created by lags
-        self.df = self.df.dropna()
+        # CRITICAL UPDATE: The dataset contains non-consecutive dates (monthly/scattered).
+        # Calculating 'yesterday's rain' (Lag 1) is impossible. 
+        # Previous logic using shift() on Date-sorted data mixed different grids.
+        # We will REMOVE lag features as they are not valid for this specific dataset structure.
+        # Instead, we rely on the strong satellite (HEM, OLR) and seasonal (Day/Week sin/cos) signals.
         
         # Define final feature set
         self.feature_columns = self.raw_features + [
-            'day_sin', 'day_cos', 'week_sin', 'week_cos',
-            'rain_lag_3', 'rain_lag_7'
+            'day_sin', 'day_cos', 'week_sin', 'week_cos'
         ]
         
         print(f"Data after feature engineering: {len(self.df)} records")

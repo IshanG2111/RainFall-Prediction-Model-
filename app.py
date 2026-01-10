@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import os
 from datetime import datetime, timedelta
+from model import PhysicsConstraints
 
 app = Flask(__name__)
 
@@ -144,11 +145,11 @@ def predict():
         predictions = []
         current_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d")
         
+
         # Feature columns must match training exactly - Updated to match model.py
         feature_cols = [
             'hem', 'wind_speed', 'uth', 'olr', 'lst_k', 'cer', 'cot',
-            'day_sin', 'day_cos', 'week_sin', 'week_cos',
-            'rain_lag_3', 'rain_lag_7'
+            'day_sin', 'day_cos', 'week_sin', 'week_cos'
         ]
 
         for i in range(7):
@@ -165,12 +166,6 @@ def predict():
             features_dict['day_cos'] = np.cos(2 * np.pi * day_of_year / 366)
             features_dict['week_sin'] = np.sin(2 * np.pi * week_of_year / 53)
             features_dict['week_cos'] = np.cos(2 * np.pi * week_of_year / 53)
-            
-            # 3. Add Lag Features (Approximation for Demo)
-            # ideally we look up past dates, but for demo we can use defaults or random small values
-            # Using 0 or low values assumes dry spell preceding, which is safer than assuming heavy rain
-            features_dict['rain_lag_3'] = features_dict.get('rain_mm', 0) * np.random.uniform(0, 0.5) 
-            features_dict['rain_lag_7'] = features_dict.get('rain_mm', 0) * np.random.uniform(0, 0.5)
 
             # 4. Create DataFrame for Input
             input_data = [features_dict.get(col, 0) for col in feature_cols]
@@ -188,6 +183,20 @@ def predict():
             # 7. Inverse Transform (expm1)
             pred_rainfall = np.expm1(pred_log)
             pred_rainfall = max(0, pred_rainfall)
+            
+            # --- Apply Physics Constraints (Post-Processing) ---
+            # Construct features dict for constraints (needs lat, lon, month, olr, uth)
+            constraint_features = {
+                'latitude': float(grid_cell['lat_center']),
+                'longitude': float(grid_cell['lon_center']),
+                'month': date_target.month,
+                'olr': features_dict.get('olr', 300),
+                'uth': features_dict.get('uth', 0),
+                'elevation': 0 # Default (TODO: Add elevation map if critical)
+            }
+            
+            raw_pred = pred_rainfall
+            pred_rainfall, clamp_reason = PhysicsConstraints.apply_post_inference_adjustments(pred_rainfall, constraint_features)
             
             # Determine status
             if pred_rainfall < 0.1:
