@@ -61,8 +61,8 @@ python app.py
 *   `models/`: Trained model binaries.
 
 ## 📊 Model Performance
-*   **R² Score**: ~0.93
-*   **RMSE**: ~6.90 mm
+*   **R² Score**: ~0.2221
+*   **RMSE**: ~0.8984 mm
 
 ---
 *Developed for Rainfall Prediction Project - 6th Sem*
