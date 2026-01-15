@@ -24,10 +24,6 @@ df = df[df[TARGET] <= upper]
 
 X = df[FEATURES]
 y = df[TARGET]
-
-# ------------------
-# Random Forest
-# ------------------
 rf = RandomForestRegressor(
     n_estimators=200,
     max_depth=15,
@@ -36,10 +32,6 @@ rf = RandomForestRegressor(
 )
 rf.fit(X, y)
 joblib.dump(rf, "models/random_forest.pkl")
-
-# ------------------
-# Gradient Boosting
-# ------------------
 gbr = GradientBoostingRegressor(
     n_estimators=200,
     learning_rate=0.05,
@@ -49,4 +41,4 @@ gbr = GradientBoostingRegressor(
 gbr.fit(X, y)
 joblib.dump(gbr, "models/gradient_boosting.pkl")
 
-print("✅ Random Forest & Gradient Boosting models trained")
+print(" Random Forest & Gradient Boosting models trained")
