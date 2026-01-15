@@ -4,6 +4,11 @@ import numpy as np
 import pickle
 import os
 from datetime import datetime, timedelta
+from performance_utils import (
+    LRUCache, timed, optimize_dataframe_dtypes, 
+    GridIndex, perf_monitor, sample_large_dataset
+)
+import performance_config as config
 
 app = Flask(__name__)
 
@@ -14,9 +19,22 @@ metrics = None
 scaler = None
 grid_df = None
 master_df = None
+grid_index = None
 
+# Caching
+prediction_cache = LRUCache(
+    max_size=config.MAX_CACHE_ENTRIES, 
+    ttl_seconds=config.CACHE_TTL_SECONDS
+) if config.ENABLE_CACHE else None
+
+grid_cache = LRUCache(
+    max_size=config.GRID_CACHE_SIZE,
+    ttl_seconds=config.CACHE_TTL_SECONDS * 2
+) if config.ENABLE_CACHE else None
+
+@timed("load_resources")
 def load_resources():
-    global model_data, model, metrics, scaler, grid_df, master_df
+    global model_data, model, metrics, scaler, grid_df, master_df, grid_index
     
     # Load Model
     model_path = 'models/model_frame_1.pkl'
@@ -26,26 +44,48 @@ def load_resources():
             model = model_data['model']
             metrics = model_data.get('metrics', {'RMSE': 'N/A', 'R2': 'N/A'})
             scaler = model_data.get('scaler')
-        print("Model loaded successfully.")
-        print(f"Model Metrics: {metrics}")
+        print("✓ Model loaded successfully.")
+        print(f"  Model Metrics: {metrics}")
     else:
-        print("Model not found. Please run training script (model.py).")
+        print("⚠ Model not found. Please run training script (model.py).")
         
-    # Load Grid
+    # Load Grid with optimization
     grid_path = 'data_processed/2_days/grid/grid_definition.parquet'
     if os.path.exists(grid_path):
         grid_df = pd.read_parquet(grid_path)
-        print(f"Grid loaded: {len(grid_df)} cells.")
+        grid_df = optimize_dataframe_dtypes(grid_df)
+        
+        # Build spatial index for fast lookups
+        if config.ENABLE_GRID_INDEX:
+            grid_index = GridIndex(grid_df)
+            print(f"✓ Grid loaded with spatial index: {len(grid_df)} cells.")
+        else:
+            print(f"✓ Grid loaded: {len(grid_df)} cells.")
     else:
-        print("Grid file not found.")
+        print("⚠ Grid file not found.")
 
-    # Load Master Dataset for realistic sampling
+    # Load Master Dataset with optimizations
     master_path = 'data_processed/2_days/finaldata/final_dataset.parquet'
     if os.path.exists(master_path):
-        master_df = pd.read_parquet(master_path)
-        print(f"Master dataset loaded: {len(master_df)} records.")
+        if config.USE_LAZY_LOADING:
+            # For huge datasets, sample or load on-demand
+            temp_df = pd.read_parquet(master_path)
+            
+            # Check if dataset is large
+            data_size_mb = temp_df.memory_usage(deep=True).sum() / (1024**2)
+            if data_size_mb > config.MAX_MEMORY_MB:
+                print(f"⚠ Large dataset detected ({data_size_mb:.1f}MB). Applying sampling...")
+                master_df = sample_large_dataset(temp_df)
+            else:
+                master_df = temp_df
+            
+            master_df = optimize_dataframe_dtypes(master_df)
+            print(f"✓ Master dataset loaded: {len(master_df)} records ({master_df.memory_usage(deep=True).sum() / (1024**2):.1f}MB)")
+        else:
+            master_df = pd.read_parquet(master_path)
+            print(f"✓ Master dataset loaded: {len(master_df)} records.")
     else:
-        print("Master dataset not found for sampling.")
+        print("⚠ Master dataset not found for sampling.")
 
 def get_lat_lon(city_name):
     # Comprehensive list of major Indian cities
@@ -73,13 +113,37 @@ def get_lat_lon(city_name):
     city_map = {k.lower(): v for k, v in cities.items()}
     return city_map.get(city_name.lower(), (20.5937, 78.9629))
 
+@timed("find_nearest_grid")
 def find_nearest_grid(lat, lon):
     if grid_df is None:
         return None
-    distances = np.sqrt((grid_df['lat_center'] - lat)**2 + (grid_df['lon_center'] - lon)**2)
-    nearest_idx = distances.argmin()
-    return grid_df.iloc[nearest_idx]
+    
+    # Check cache first
+    if grid_cache:
+        cache_key = f"{lat:.4f},{lon:.4f}"
+        cached = grid_cache.get(cache_key)
+        if cached is not None:
+            return cached
+    
+    # Use spatial index if available
+    if grid_index and config.ENABLE_GRID_INDEX:
+        result = grid_index.find_nearest(lat, lon)
+    else:
+        # Fallback to numpy vectorized calculation
+        from performance_utils import vectorized_distance
+        distances = vectorized_distance(lat, lon, 
+                                       grid_df['lat_center'].values,
+                                       grid_df['lon_center'].values)
+        nearest_idx = distances.argmin()
+        result = grid_df.iloc[nearest_idx]
+    
+    # Cache result
+    if grid_cache:
+        grid_cache.put(cache_key, result)
+    
+    return result
 
+@timed("get_realistic_features")
 def get_realistic_features(grid_id):
     """
     Get realistic features for a given grid.
@@ -93,10 +157,15 @@ def get_realistic_features(grid_id):
     if master_df is None:
         return default_features
 
+    # Filter for specific grid
     grid_data = master_df[master_df['grid_id'] == grid_id]
     
     if grid_data.empty:
-        sample = master_df.sample(1).iloc[0]
+        # Sample from overall dataset if no data for this grid
+        if len(master_df) > 0:
+            sample = master_df.sample(1).iloc[0]
+        else:
+            return default_features
     else:
         sample = grid_data.sample(1).iloc[0]
 
@@ -121,6 +190,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
+@timed("predict_endpoint")
 def predict():
     try:
         data = request.get_json()
@@ -132,6 +202,13 @@ def predict():
             
         if model is None:
             return jsonify({'error': 'Model not loaded'}), 500
+
+        # Check cache for this prediction
+        cache_key = f"{city}:{start_date_str}"
+        if prediction_cache:
+            cached_result = prediction_cache.get(cache_key)
+            if cached_result is not None:
+                return jsonify(cached_result)
 
         lat, lon = get_lat_lon(city)
         grid_cell = find_nearest_grid(lat, lon)
@@ -150,8 +227,13 @@ def predict():
             'month', 'day_of_year'
         ]
 
+        # Vectorized prediction preparation
+        all_inputs = []
+        dates = []
+        
         for i in range(7):
             date_target = current_date_obj + timedelta(days=i)
+            dates.append(date_target)
             
             # 1. Get Base Satellite Features
             features_dict = get_realistic_features(grid_id)
@@ -160,20 +242,28 @@ def predict():
             features_dict['month'] = date_target.month
             features_dict['day_of_year'] = date_target.timetuple().tm_yday
             
-            # 3. Create DataFrame for Input
+            # 3. Create input row
             input_data = [features_dict.get(col, 0) for col in feature_cols]
-            input_df = pd.DataFrame([input_data], columns=feature_cols)
+            all_inputs.append((input_data, features_dict))
+        
+        # Batch prediction - process all 7 days at once
+        input_matrix = np.array([inp[0] for inp in all_inputs])
+        input_df = pd.DataFrame(input_matrix, columns=feature_cols)
+        
+        # 4. Scale Features
+        if scaler:
+            input_df_scaled = scaler.transform(input_df)
+        else:
+            input_df_scaled = input_df
+        
+        # 5. Batch Predict (Log Scale)
+        pred_logs = model.predict(input_df_scaled)
+        
+        # 6. Process predictions
+        for i, (date_target, pred_log) in enumerate(zip(dates, pred_logs)):
+            features_dict = all_inputs[i][1]
             
-            # 4. Scale Features
-            if scaler:
-                input_df_scaled = scaler.transform(input_df)
-            else:
-                input_df_scaled = input_df
-            
-            # 5. Predict (Log Scale)
-            pred_log = model.predict(input_df_scaled)[0]
-            
-            # 6. Inverse Transform (expm1)
+            # Inverse Transform (expm1)
             pred_rainfall = np.expm1(pred_log)
             pred_rainfall = max(0, pred_rainfall)
             
@@ -205,11 +295,17 @@ def predict():
                     'HEM': f"{features_dict['hem']:.2f}"
                 }
             })
-            
-        return jsonify({
+        
+        result = {
             'predictions': predictions,
             'model_metrics': metrics
-        })
+        }
+        
+        # Cache the result
+        if prediction_cache:
+            prediction_cache.put(cache_key, result)
+            
+        return jsonify(result)
 
     except Exception as e:
         print(f"Error: {e}")
@@ -223,6 +319,7 @@ def get_cities():
 
 # ... map data endpoint remains the same ...
 @app.route('/map-data', methods=['GET'])
+@timed("map_data_endpoint")
 def get_map_data():
     try:
         if not os.path.exists('data_processed/2_days/grid/grid_definition.parquet'):
@@ -252,6 +349,34 @@ def get_map_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/performance', methods=['GET'])
+def get_performance_stats():
+    """Endpoint to get performance statistics"""
+    stats = perf_monitor.get_stats()
+    cache_info = {}
+    if prediction_cache:
+        cache_info['prediction_cache_size'] = prediction_cache.size()
+    if grid_cache:
+        cache_info['grid_cache_size'] = grid_cache.size()
+    
+    return jsonify({
+        'performance_metrics': stats,
+        'cache_info': cache_info,
+        'config': {
+            'caching_enabled': config.ENABLE_CACHE,
+            'max_cache_entries': config.MAX_CACHE_ENTRIES,
+            'grid_index_enabled': config.ENABLE_GRID_INDEX,
+            'lazy_loading': config.USE_LAZY_LOADING
+        }
+    })
+
 if __name__ == '__main__':
     load_resources()
+    print("\n" + "="*70)
+    print("Application Ready")
+    print("="*70)
+    print(f"Caching: {'Enabled' if config.ENABLE_CACHE else 'Disabled'}")
+    print(f"Grid Index: {'Enabled' if config.ENABLE_GRID_INDEX else 'Disabled'}")
+    print(f"Performance Monitoring: {'Enabled' if config.ENABLE_PROFILING else 'Disabled'}")
+    print("="*70 + "\n")
     app.run(debug=True, port=5000)
