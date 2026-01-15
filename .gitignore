@@ -9,6 +9,9 @@ data_processed/*.parquet
 data_processed/*.csv
 !data_processed/india_grid.csv
 
+# Performance benchmarks (generated files)
+performance_benchmark_*.json
+
 # Environment
 .env
 .vscode/

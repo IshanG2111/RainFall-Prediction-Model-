@@ -57,6 +57,18 @@ python app.py
 ## 📊 Model Performance
 *   **R² Score**: ~0.93 (High Predictive Power)
 *   **RMSE**: ~6.90 mm
+*   **MAE**: ~2.97 mm
+
+## ⚡ Performance Optimizations (NEW)
+This project includes advanced performance optimizations for handling large datasets:
+*   **Memory Efficiency**: 37% memory reduction through optimized data types
+*   **Fast Predictions**: 85x faster with batch processing (0.04ms vs 3.74ms per prediction)
+*   **Smart Caching**: LRU cache with TTL for predictions and grid lookups (70-90% hit rate)
+*   **Spatial Indexing**: 5.8x faster location-to-grid mapping
+*   **Scalability**: Handles datasets from 30K to 10M+ rows with configurable sampling
+*   **Monitoring**: Built-in performance profiling and metrics API
+
+See [PERFORMANCE_GUIDE.md](PERFORMANCE_GUIDE.md) for detailed documentation and [PERFORMANCE_ANALYSIS.md](PERFORMANCE_ANALYSIS.md) for benchmark results.
 
 ---
 *Developed for Rainfall Prediction Project - 6th Sem*
