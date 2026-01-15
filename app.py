@@ -6,9 +6,12 @@ import os
 from datetime import datetime, timedelta
 from performance_utils import (
     LRUCache, timed, optimize_dataframe_dtypes, 
-    GridIndex, perf_monitor, sample_large_dataset
+    GridIndex, perf_monitor, sample_large_dataset, vectorized_distance
 )
 import performance_config as config
+
+# Constants
+KELVIN_TO_CELSIUS = 273.15
 
 app = Flask(__name__)
 
@@ -130,7 +133,6 @@ def find_nearest_grid(lat, lon):
         result = grid_index.find_nearest(lat, lon)
     else:
         # Fallback to numpy vectorized calculation
-        from performance_utils import vectorized_distance
         distances = vectorized_distance(lat, lon, 
                                        grid_df['lat_center'].values,
                                        grid_df['lon_center'].values)
@@ -281,7 +283,7 @@ def predict():
             
             predictions.append({
                 'Date': pred_date_str,
-                 'Temperature': f"{features_dict['lst_k'] - 273.15:.1f}°C", # LST is in Kelvin
+                 'Temperature': f"{features_dict['lst_k'] - KELVIN_TO_CELSIUS:.1f}°C",
                 'Humidity': f"UTH: {features_dict['uth']:.0f}%",
                 'Pressure': f"OLR: {int(features_dict['olr'])} W/m²", 
                 'Predicted_Rainfall': f"{pred_rainfall:.1f} mm",

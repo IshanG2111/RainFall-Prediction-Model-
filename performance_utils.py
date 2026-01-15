@@ -145,7 +145,8 @@ def optimize_dataframe_dtypes(df):
     optimized_size = df.memory_usage(deep=True).sum() / (1024**2)
     saved = original_size - optimized_size
     
-    if saved > 0.1:  # Only log if saved > 100KB
+    # Log if savings exceed threshold
+    if saved * 1024 > config.MEMORY_LOG_THRESHOLD_KB:
         print(f"Memory optimized: {original_size:.2f}MB → {optimized_size:.2f}MB (saved {saved:.2f}MB)")
     
     return df
@@ -166,9 +167,22 @@ def chunked_dataframe_reader(filepath, chunk_size=None):
 
 
 def vectorized_distance(lat1, lon1, lat_array, lon_array):
-    """Fast vectorized distance calculation using numpy"""
-    # Simple Euclidean distance (for small areas)
-    # For more accuracy with lat/lon, use haversine but this is faster
+    """
+    Fast vectorized distance calculation using numpy.
+    
+    Note: This uses simple Euclidean distance which is appropriate for small 
+    geographic areas (< 100km). For larger areas or higher accuracy requirements,
+    consider using the haversine formula to account for Earth's curvature.
+    
+    Args:
+        lat1: Query latitude
+        lon1: Query longitude
+        lat_array: Array of latitudes to compare
+        lon_array: Array of longitudes to compare
+    
+    Returns:
+        Array of distances
+    """
     lat_diff = lat_array - lat1
     lon_diff = lon_array - lon1
     return np.sqrt(lat_diff**2 + lon_diff**2)
@@ -185,13 +199,14 @@ class GridIndex:
         self._build_index()
     
     def _build_index(self):
-        """Build spatial hash index"""
-        # Create hash map based on rounded coordinates
-        for idx, row in self.grid_df.iterrows():
-            lat_key = round(row['lat_center'] * 4) / 4  # 0.25 degree bins
-            lon_key = round(row['lon_center'] * 4) / 4
+        """Build spatial hash index using vectorized operations"""
+        # Round coordinates to create spatial bins (0.25 degree resolution)
+        lat_keys = (self.grid_df['lat_center'] * 4).round() / 4
+        lon_keys = (self.grid_df['lon_center'] * 4).round() / 4
+        
+        # Build hash map efficiently
+        for idx, (lat_key, lon_key) in enumerate(zip(lat_keys, lon_keys)):
             key = (lat_key, lon_key)
-            
             if key not in self.grid_hash:
                 self.grid_hash[key] = []
             self.grid_hash[key].append(idx)
@@ -237,7 +252,18 @@ class GridIndex:
 
 def sample_large_dataset(df, sample_ratio=None, per_grid_samples=None):
     """
-    Sample a large dataset efficiently while maintaining grid distribution
+    Sample a large dataset efficiently while maintaining grid distribution.
+    
+    For large datasets, this uses stratified sampling per grid to maintain
+    the spatial distribution of the data.
+    
+    Args:
+        df: DataFrame to sample
+        sample_ratio: Overall sampling ratio (default from config)
+        per_grid_samples: Samples per grid cell (default from config)
+    
+    Returns:
+        Sampled DataFrame
     """
     if sample_ratio is None:
         sample_ratio = config.SAMPLE_SIZE_RATIO
@@ -250,9 +276,11 @@ def sample_large_dataset(df, sample_ratio=None, per_grid_samples=None):
     
     # Sample per grid to maintain distribution
     if 'grid_id' in df.columns:
-        sampled = df.groupby('grid_id').apply(
+        # Use vectorized groupby with lambda for per-grid sampling
+        # Note: For very large datasets, consider using sample() with frac parameter
+        sampled = df.groupby('grid_id', group_keys=False).apply(
             lambda x: x.sample(n=min(per_grid_samples, len(x)), random_state=42)
-        ).reset_index(drop=True)
+        )
         print(f"Sampled dataset: {len(df)} → {len(sampled)} rows (per-grid sampling)")
         return sampled
     else:

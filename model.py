@@ -114,7 +114,7 @@ class RainfallPredictor:
         
         if config.ENABLE_MODEL_OPTIMIZATION:
             # Additional optimizations for large datasets
-            model_params['max_leaf_nodes'] = 31  # Limit tree complexity
+            model_params['max_leaf_nodes'] = config.MAX_LEAF_NODES
             print("Model optimization enabled")
         
         self.model = HistGradientBoostingRegressor(**model_params)

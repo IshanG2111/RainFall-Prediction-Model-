@@ -28,8 +28,10 @@ OPTIMIZE_DTYPES = True  # Convert to smaller data types to save memory
 # Model Settings
 ENABLE_MODEL_OPTIMIZATION = True  # Use optimized model settings
 USE_INCREMENTAL_LEARNING = False  # Enable incremental learning for huge datasets
+MAX_LEAF_NODES = 31  # Limit tree complexity (powers of 2 minus 1 are optimal)
 
 # Performance Monitoring
 ENABLE_PROFILING = True  # Enable performance profiling
 LOG_SLOW_OPERATIONS = True  # Log operations taking >1 second
 SLOW_OPERATION_THRESHOLD = 1.0  # Seconds
+MEMORY_LOG_THRESHOLD_KB = 100  # Log memory savings above this threshold (KB)
