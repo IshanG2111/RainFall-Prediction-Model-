@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rainfall Prediction - AI Weather Forecast</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/framer-motion@11/dist/framer-motion.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --glass-bg: rgba(30, 41, 59, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Rain Canvas Background */
+        #rainCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% -20%, #1e293b 0%, #0f172a 100%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card {
+            border-radius: 24px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.03em;
+            text-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .metrics-badge {
+            display: inline-flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            padding: 0.5rem 1.5rem;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Input Form */
+        .input-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        form {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 20px;
+            align-items: flex-end;
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-label {
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            width: 250px;
+        }
+
+        input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        /* Datalist arrow styling */
+        input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        button.primary-btn {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+            height: 100%;
+        }
+
+        button.primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.6);
+        }
+
+        /* Forecast Sections */
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-cyan);
+            border-radius: 2px;
+        }
+
+        /* Hero Card (Tomorrow) */
+        .hero-card {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            align-items: center;
+            gap: 2rem;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .hero-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        .hero-left h2 {
+            font-size: 3rem;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-left .date {
+            color: var(--accent-cyan);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .weather-icon-large {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.2));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .status-badge {
+            margin-top: 1rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* Chart Section */
+        .chart-container {
+            height: 300px;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        /* Grid */
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .day-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            background: rgba(30, 41, 59, 0.4);
+        }
+
+        .day-name {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .day-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .day-temp {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-rain {
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Satellite Details Panel */
+        .satellite-details {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 0.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.2rem;
+        }
+
+        /* Loading */
+        #loader {
+            display: none;
+            text-align: center;
+            margin: 4rem 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="rainCanvas"></canvas>
+
+    <div class="container">
+        <header class="fade-in">
+            <h1>Rainfall AI</h1>
+            <p class="subtitle">Advanced Neural Weather Prediction (Phase 1)</p>
+            <div id="modelMetrics" class="metrics-badge hidden"></div>
+            <div id="gridInfo" class="metrics-badge hidden"
+                style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.1); color: var(--accent-purple);">
+            </div>
+        </header>
+
+        <div class="input-section fade-in" style="animation-delay: 0.2s;">
+            <form id="predictForm" class="glass glass-card">
+                <div class="input-group">
+                    <label class="input-label">Select City</label>
+                    <input list="cities" id="cityInput" name="city" placeholder="Type to search..." autocomplete="off">
+                    <datalist id="cities">
+                        <option value="Delhi">
+                        <option value="Mumbai">
+                        <option value="Bangalore">
+                        <option value="Chennai">
+                        <option value="Kolkata">
+                        <option value="Hyderabad">
+                        <option value="Pune">
+                        <option value="Jaipur">
+                        <option value="Ahmedabad">
+                        <option value="Bhubaneswar">
+                        <option value="Lucknow">
+                        <option value="Kanpur">
+                        <option value="Nagpur">
+                        <option value="Indore">
+                        <option value="Thane">
+                        <option value="Bhopal">
+                        <option value="Visakhapatnam">
+                        <option value="Patna">
+                        <option value="Vadodara">
+                        <option value="Ghaziabad">
+                        <option value="Ludhiana">
+                        <option value="Agra">
+                        <option value="Nashik">
+                        <option value="Ranchi">
+                        <option value="Faridabad">
+                        <option value="Meerut">
+                        <option value="Rajkot">
+                        <option value="Surat">
+                        <option value="Varanasi">
+                        <option value="Srinagar">
+                        <option value="Aurangabad">
+                        <option value="Dhanbad">
+                        <option value="Amritsar">
+                        <option value="Navi Mumbai">
+                        <option value="Allahabad">
+                        <option value="Howrah">
+                        <option value="Gwalior">
+                        <option value="Jabalpur">
+                        <option value="Coimbatore">
+                        <option value="Vijayawada">
+                        <option value="Jodhpur">
+                        <option value="Madurai">
+                        <option value="Raipur">
+                        <option value="Kota">
+                        <option value="Guwahati">
+                        <option value="Chandigarh">
+                        <option value="Trivandrum">
+                        <option value="Mysore">
+                        <option value="Tiruchirappalli">
+                        <option value="Bareilly">
+                        <option value="Dehradun">
+                        <option value="Cuttack">
+                        <option value="Kochi">
+                        <option value="Udaipur">
+                    </datalist>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Date</label>
+                    <input id="startDate" name="date" type="date" required />
+                </div>
+
+                <button type="submit" class="primary-btn">Predict Forecast</button>
+            </form>
+        </div>
+
+        <div id="loader">
+            <div class="spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-secondary);">Analyzing satellite data (INSAT-3DR)...</p>
+        </div>
+
+        <div id="resultsArea" class="hidden">
+            <div class="section-title">Tomorrow's Outlook</div>
+            <div id="heroCard" class="glass glass-card hero-card">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="section-title">Precipitation Trend</div>
+            <div class="glass glass-card chart-container">
+                <canvas id="weatherChart"></canvas>
+            </div>
+
+            <div class="section-title">7-Day Forecast</div>
+            <div id="forecastGrid" class="forecast-grid">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Logic Completely Removed -->
+
+    <script>
+        // --- Chart Logic ---
+        let weatherChart = null;
+
+        function renderChart(dates, rains, temps) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+
+            if (weatherChart) weatherChart.destroy();
+
+            weatherChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Rainfall (mm)',
+                            data: rains,
+                            backgroundColor: 'rgba(6, 182, 212, 0.5)',
+                            borderColor: 'rgba(6, 182, 212, 1)',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            order: 2
+                        },
+                        {
+                            label: 'Temperature (K)',
+                            data: temps,
+                            type: 'line',
+                            borderColor: '#8b5cf6',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#fff',
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' },
+                            title: { display: true, text: 'Rainfall (mm)', color: '#94a3b8' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#8b5cf6' },
+                            title: { display: true, text: 'Temp (Kelvin)', color: '#8b5cf6' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Rain Animation Engine ---
+        const canvas = document.getElementById('rainCanvas');
+        const ctx = canvas.getContext('2d');
+        let drops = [];
+        let rainIntensity = 0; // 0 to 1
+        let animationId;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Drop {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * canvas.height;
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.z = Math.random() * 0.5 + 0.5; // Depth
+                this.len = (Math.random() * 20 + 10) * this.z;
+                this.speed = (Math.random() * 10 + 5) * this.z * (1 + rainIntensity * 2);
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.len);
+                ctx.strokeStyle = `rgba(174, 194, 224, ${0.2 * this.z + rainIntensity * 0.3})`;
+                ctx.lineWidth = 1 * this.z;
+                ctx.stroke();
+            }
+        }
+
+        function initRain(count) {
+            drops = [];
+            for (let i = 0; i < count; i++) {
+                drops.push(new Drop());
+            }
+        }
+
+        function animateRain() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drops.forEach(drop => {
+                drop.update();
+                drop.draw();
+            });
+            animationId = requestAnimationFrame(animateRain);
+        }
+
+        initRain(50);
+        animateRain();
+
+        function updateRainIntensity(status) {
+            let count = 50;
+            let intensity = 0;
+
+            if (status.includes("Heavy")) {
+                count = 800;
+                intensity = 1.0;
+            } else if (status.includes("Moderate")) {
+                count = 400;
+                intensity = 0.6;
+            } else if (status.includes("Light")) {
+                count = 150;
+                intensity = 0.3;
+            } else {
+                count = 20;
+                intensity = 0;
+            }
+
+            rainIntensity = intensity;
+
+            if (drops.length < count) {
+                while (drops.length < count) drops.push(new Drop());
+            } else {
+                drops = drops.slice(0, count);
+            }
+        }
+
+        // --- App Logic ---
+        document.getElementById('predictForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const loader = document.getElementById('loader');
+            const results = document.getElementById('resultsArea');
+            const metricsDisplay = document.getElementById('modelMetrics');
+            const gridDisplay = document.getElementById('gridInfo');
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            loader.style.display = 'block';
+            results.classList.add('hidden');
+            metricsDisplay.classList.add('hidden');
+            gridDisplay.classList.add('hidden');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const jsonResponse = await response.json();
+                loader.style.display = 'none';
+
+                if (jsonResponse.error) {
+                    alert(jsonResponse.error);
+                    return;
+                }
+
+                // Parse predictions and metrics
+                const predictions = jsonResponse.predictions;
+                const metrics = jsonResponse.model_metrics;
+                const gridInfo = jsonResponse.grid_info;
+
+                // Show Metrics
+                if (metrics) {
+                    metricsDisplay.innerHTML = `
+                        <span>RMSE: <strong>${metrics.RMSE}</strong></span>
+                        <span>R² Score: <strong>${metrics.R2}</strong></span>
+                        <span>Test Samples: ${metrics.Test_Samples || 'N/A'}</span>
+                    `;
+                    metricsDisplay.classList.remove('hidden');
+                }
+
+                // Show Grid Info
+                if (gridInfo) {
+                    gridDisplay.innerHTML = `
+                        <span style="font-weight: 600;">GRID ID: ${gridInfo.grid_id}</span>
+                        <span style="font-weight: 300; opacity: 0.8; font-size: 0.8em; margin-left: 10px;">
+                            (Lat: ${gridInfo.latitude.toFixed(3)}, Lon: ${gridInfo.longitude.toFixed(3)})
+                        </span>
+                    `;
+                    gridDisplay.classList.remove('hidden');
+                }
+
+                renderResults(predictions);
+
+                // Prepare Chart Data
+                const labels = predictions.map(p => p.Date.split(',')[0]);
+                const rainData = predictions.map(p => parseFloat(p.Predicted_Rainfall.split(' ')[0]));
+                const tempData = predictions.map(p => parseFloat(p.Temperature.split(' ')[0]));
+
+                renderChart(labels, rainData, tempData);
+
+                results.classList.remove('hidden');
+                results.classList.add('fade-in');
+
+                // Update rain based on tomorrow's forecast
+                updateRainIntensity(predictions[0].Status);
+
+            } catch (err) {
+                console.error(err);
+                loader.style.display = 'none';
+                alert("Failed to fetch predictions");
+            }
+        });
+
+        function getWeatherIcon(status) {
+            if (status.includes("Heavy")) return "⛈️";
+            if (status.includes("Moderate")) return "🌧️";
+            if (status.includes("Light")) return "🌦️";
+            return "☁️";
+        }
+
+        function renderResults(data) {
+            const tomorrow = data[0];
+            const heroCard = document.getElementById('heroCard');
+            const grid = document.getElementById('forecastGrid');
+            const details = tomorrow.Details || {};
+
+            // Hero Card
+            heroCard.innerHTML = `
+                <div class="hero-left">
+                    <div class="date">${tomorrow.Date}</div>
+                    <h2>${tomorrow.Predicted_Rainfall.split(' ')[0]}<span style="font-size: 1.5rem">mm</span></h2>
+                    <div class="status-badge" style="color: ${getStatusColor(tomorrow.Status)}">${tomorrow.Status}</div>
+                </div>
+                <div class="hero-center animate-float">
+                    <div class="weather-icon-large">${getWeatherIcon(tomorrow.Status)}</div>
+                    <div style="color: var(--accent-cyan); font-weight: 600;">Prob: ${tomorrow.RainProbability}%</div>
+                </div>
+                <div class="hero-right">
+                    <div class="detail-row">
+                        <span class="detail-label" title="Land Surface Temperature">Satellite LST</span>
+                        <span class="detail-value">${tomorrow.Temperature}</span>
+                    </div>
+                     <div class="detail-row">
+                        <span class="detail-label">Humidity</span>
+                        <span class="detail-value">${tomorrow.Humidity}</span>
+                    </div>
+                     <div class="detail-row">
+                        <span class="detail-label">Wind Speed</span>
+                        <span class="detail-value">${details['Wind Speed']}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">COT / CER</span>
+                        <span class="detail-value">${details.COT} / ${details.CER}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Pressure (OLR)</span>
+                        <span class="detail-value">${tomorrow.Pressure}</span>
+                    </div>
+                </div>
+            `;
+
+            // Grid
+            grid.innerHTML = data.slice(1).map((day, i) => {
+                const d = day.Details || {};
+                return `
+                <div class="glass glass-card day-card fade-in" style="animation-delay: ${i * 0.1}s">
+                    <div class="day-name">${day.Date.split(',')[0]}</div>
+                    <div class="day-icon">${getWeatherIcon(day.Status)}</div>
+                    <div class="day-temp">${day.Temperature}</div>
+                    <div class="day-rain">${day.Predicted_Rainfall}</div>
+                    
+                     <div class="satellite-details">
+                        <span>LST: ${day.Temperature}</span>
+                        <span>COT: ${d.COT || '-'}</span>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function getStatusColor(status) {
+            if (status.includes("Heavy")) return "#ef4444";
+            if (status.includes("Moderate")) return "#f59e0b";
+            if (status.includes("Light")) return "#3b82f6";
+            return "#94a3b8";
+        }
+
+        // Set default date to today
+        document.getElementById('startDate').valueAsDate = new Date();
+    </script>
+</body>
+
+</html>

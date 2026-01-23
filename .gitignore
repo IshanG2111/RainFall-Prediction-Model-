@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+*.pkl
+
+# Data
+data_processed/*.parquet
+data_processed/*.csv
+!data_processed/india_grid.csv
+
+# Environment
+.env
+.vscode/

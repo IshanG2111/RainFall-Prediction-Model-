@@ -1,0 +1,8 @@
+RMSE: 0.2221
+MAE: 0.0832
+R2: 0.8984
+Features: ['hem', 'wind_speed', 'uth', 'olr', 'lst_k', 'cer', 'cot', 'day_sin', 'day_cos', 'week_sin', 'week_cos']
+
+Model demonstrates high predictive accuracy with an R² ~0.90.
+Tested on roughly 23,348 independent samples using a Forward Chaining time-split.
+The low RMSE (~0.22 mm) indicates precise rainfall estimation.
