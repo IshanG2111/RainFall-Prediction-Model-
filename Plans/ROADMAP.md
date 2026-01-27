@@ -4,7 +4,7 @@ This roadmap outlines a robust, phase-wise approach for a 40–50 mark, 2-credit
 
 **Key features:**
 - 📦 Individual phases for each dataset
-- 📅 Cycle-based project (2 days → 7 days → 15 days → 60–90 days)
+- 📅 Cycle-based project (2 days → 8 days → 90 days)
 - ✅ Detailed point-to-point steps (no code)
 - 🧑‍💻 Realistic workflow (industry-style)
 - ℹ️ What to do, *why* to do it, and *what output* to expect at each step
@@ -123,7 +123,7 @@ project/
 ## 🟦 PHASE 2 — MERGE ALL PRODUCTS INTO DAILY MASTER DATASET
 
 **Steps:**  
-- Pick date range (2d, 7d, 15d, 60–90d as required)  
+- Pick date range (2d, 8d, 15d, 60–90d as required)  
 - For each date & grid cell, assemble:  
     - Date, grid_id
     - `IMC_daily (Y)`
@@ -154,8 +154,8 @@ Train/test model in four stages with increasing dataset size.
     - Values reasonable  
     - Pipeline validated
 
-### 🟢 FRAME 2 — 7 Days Data Model
-- Process 7 days of datasets
+### 🟢 FRAME 2 — 8 Days Data Model
+- Process 8 days of datasets
 - Add lag features: IMC(t–1)
 - Add time features: DOY, month, monsoon flag
 - Fit regression, evaluate train/test split
@@ -164,34 +164,18 @@ Train/test model in four stages with increasing dataset size.
     - Model better than naïve baseline
     - Reduced residuals
 
-### 🔵 FRAME 3 — 15 Days Data Model
-- Process 15 days
+### 🔵 FRAME 3 — 90 Days Data Model
+- Process 90 days
 - Add features:
     - wind_shear
     - 3-day rolling rainfall avg
     - vorticity components
 - Fit multiple regression & ridge regression
-- Test on last 4–5 days, spatial hold-out
+- Test on last 15-20 days, spatial hold-out
 - **Output:**  
     - Stable coefficients  
     - Realistic accuracy  
     - Diagnostic plots (scatter, residuals, importance)
-
-### 🟣 FRAME 4 — FINAL MODEL (60–90 Days)
-- Download/process 2–3 months’ data
-- As above, with lag/rolling features (t–1, t–3, rolling mean)
-- Fit final regression model
-- Test on last 20–30% of days
-- **Evaluate:**  
-    - MAE, RMSE, R² metrics  
-    - Compare predictions vs IMC  
-    - (Optional: IMC vs HEM)  
-    - Save as `model_final.pkl`
-- **Submission Output:**  
-    - Final model & accuracy  
-    - Plots  
-    - Clean merged dataset  
-    - API-ready logic
 
 ---
 
@@ -247,14 +231,13 @@ Train/test model in four stages with increasing dataset size.
 ## ✅ FINAL DELIVERABLES CHECKLIST
 
 **DATA**
-- Raw H5 files (2d, 7d, 15d, final)
+- Raw H5 files (2d, 8d, 90d,)
 - Processed daily grid tables
 
 **MODELS**
 - `model_frame_2d.pkl`
-- `model_frame_7d.pkl`
-- `model_frame_15d.pkl`
-- `model_final.pkl`
+- `model_frame_8d.pkl`
+- `model_frame_90d.pkl`
 
 **REPORTS & PLOTS**
 - Accuracy graphs

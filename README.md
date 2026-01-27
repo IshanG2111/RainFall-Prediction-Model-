@@ -35,23 +35,16 @@ ensuring correctness, stability, and accuracy at each step.
 - Merge datasets  
 - Train a small regression model  
 
-## 🟩 Phase 2 — 7-Day Pipeline (Early Modeling)
+## 🟩 Phase 2 — 8-Day Pipeline (Early Modeling)
 - Process 7 days end-to-end  
 - Add lag features & time features  
 - Train linear & ridge regressions  
 - Generate early diagnostic plots  
 
-## 🟧 Phase 3 — 15-Day Pipeline (Advanced Features)
+## 🟧 Phase 3 — 90-Day Pipeline (Advanced Features)
 - Add rolling stats, wind shear, vorticity, divergence  
 - Time-based cross-validation  
 - Spatial hold-out validation  
-- Improve model stability  
-
-## 🟥 Phase 4 — 60–90 Day Final Dataset (Production Model)
-- Build the full dataset  
-- Train final regression model  
-- Deploy backend prediction API  
-- Build frontend UI  
-- Final reports & evaluation
+- Improve model stability
 
 ---

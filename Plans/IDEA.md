@@ -4,7 +4,7 @@
 
 **Single-sentence overview**
 
-Use IMC aggregated to daily as the target and daily-aggregated WDP, UTH, LST, OLR, CMP, HEM (and time/lag features) as predictors; build and validate the pipeline & model in four incremental frames (2 days, 7 days, 15 days, 60–90 days).
+Use IMC aggregated to daily as the target and daily-aggregated WDP, UTH, LST, OLR, CMP, HEM (and time/lag features) as predictors; build and validate the pipeline & model in four incremental frames (2 days, 8 days, 90 days).
 
 **Dataset reference**
 
@@ -96,12 +96,11 @@ project_root/
  ├─ data_processed/
  │   ├─ grid_definition.parquet    # grid cell centers, ids, lat/lon ranges
  │   ├─ frame_2d/                  # processed per-frame parquet shards
- │   ├─ frame_7d/
- │   ├─ frame_15d/
- │   └─ frame_final/               # 60-90 day final dataset
+ │   ├─ frame_8d/
+ │   ├─ frame_90d/
  ├─ models/
  │   ├─ model_frame_2d.pkl
- │   ├─ model_frame_7d.pkl
+ │   ├─ model_frame_8d.pkl
  │   └─ model_final.pkl
  ├─ notebooks/                      # EDA + diagnostic notebooks (one per frame)
  ├─ reports/
@@ -167,8 +166,7 @@ Each frame is an incremental experiment with increasing data and complexity.
 
 - **Frame A** — Base pipeline + model using 2 days (proof-of-concept)
 - **Frame B** — Extend to 7 days (small experiment)
-- **Frame C** — Extend to 15 days (mid-stage)
-- **Frame D** — Final model with 2–3 months (60–90 days)
+- **Frame C** — Extend to 90 days (final-stage)
 
 ---
 
@@ -274,7 +272,7 @@ Verify full end-to-end pipeline and model run; sanity check features & outputs.
 
 ---
 
-## 5.2 Frame B — 7-Day Small Experiment
+## 5.2 Frame B — 8-Day Small Experiment
 
 **Goal:**  
 Test stability of the pipeline and preliminary model behavior with more days and spatial sampling.
@@ -287,15 +285,15 @@ Test stability of the pipeline and preliminary model behavior with more days and
 
 Repeat Frame A process with these differences:
 
-1. **Process full 7-day batch**
+1. **Process full 8-day batch**
    - Same spatial subset and aggregation rules.
    - Save outputs to:
-     - `data_processed/frame_7d/`
+     - `data_processed/frame_8d/`
 
 2. **Spatial sampling**
    - Avoid only national aggregates (too few rows).
    - Create per-grid-cell rows:
-     - Many grid cells × 7 days
+     - Many grid cells × 8 days
    - Optionally sub-sample grid cells if dataset is too large.
 
 3. **Feature engineering**
@@ -309,7 +307,7 @@ Repeat Frame A process with these differences:
 4. **Train/test split**
    - Options:
      - Time-split:
-       - First 5 days train, last 2 days test, or
+       - First 5 days train, last 3 days test, or
      - Train on first 70% of rows (by time) and test on last 30%.
 
    - Spatial hold-out variant also possible:
@@ -341,8 +339,8 @@ Repeat Frame A process with these differences:
 
 ### 5.2.4 Deliverables (Frame B)
 
-- `data_processed/frame_7d/*.parquet`
-- `models/model_frame_7d.pkl`
+- `data_processed/frame_8d/*.parquet`
+- `models/model_frame_8d.pkl`
 - Comparison report:
   - Model with/without HEM
   - EDA
@@ -350,25 +348,25 @@ Repeat Frame A process with these differences:
 
 ---
 
-## 5.3 Frame C — 15-Day Mid-Stage
+## 5.3 Frame C — 90-Day final-Stage
 
 **Goal:**  
 Get better statistics; test more advanced features and stronger validation.
 
 ### 5.3.1 Inputs
 
-- 15 consecutive days (or a convenient two-week range) of all products.
+- 90 consecutive days (or a convenient two-week range) of all products.
 
 ### 5.3.2 Steps
 
-1. **Process 15-day batch**
+1. **Process 90-day batch**
    - Same pipeline as before.
    - Store in:
-     - `data_processed/frame_15d/`
+     - `data_processed/frame_90d/`
 
 2. **Increase spatial sampling**
    - Include more grid cells:
-     - Aim for **a few thousand grid cells × 15 days**.
+     - Aim for **a few thousand grid cells × 90 days**.
    - Exclude ocean-dominant cells using a **land mask**.
 
 3. **Feature engineering upgrades**
@@ -406,7 +404,7 @@ Get better statistics; test more advanced features and stronger validation.
 ### 5.3.3 Acceptance Criteria (Frame C)
 
 - Metrics:
-  - Improve or stabilize relative to 7-day frame.
+  - Improve or stabilize relative to 8-day frame.
 - Generalization:
   - Reasonable performance on:
     - Held-out grid cells (spatial)
@@ -414,115 +412,12 @@ Get better statistics; test more advanced features and stronger validation.
 
 ### 5.3.4 Deliverables (Frame C)
 
-- `data_processed/frame_15d/*.parquet`
-- `models/model_frame_15d.pkl`
+- `data_processed/frame_90d/*.parquet`
+- `models/model_frame_90d.pkl`
 - Cross-validation report:
   - Folds
   - Metrics
   - Spatial hold-out results
-
----
-
-## 5.4 Frame D — Final 60–90 Day Model
-
-**Goal:**  
-Full model training and evaluation; produce deployable artifact (model + API + demo).
-
-### 5.4.1 Inputs
-
-- 60–90 days of all datasets over a continuous time period.
-
-### 5.4.2 Steps
-
-1. **Full-period processing**
-   - Process entire 60–90-day dataset using same aggregation pipeline.
-   - Store in:
-     - `data_processed/frame_final/`
-   - Consider batch processing:
-     - e.g., per-week Parquet shards then concatenate.
-
-2. **Full spatial sampling**
-   - Keep all land grid cells or a carefully chosen subset.
-   - Approximate dataset size:
-     - Example: 10k cells × 90 days ≈ 900k rows.
-   - Use Parquet partitioning:
-     - By `grid_id` or `date` (or both) for efficient IO.
-
-3. **Advanced feature engineering**
-   - Same as Frame C, plus:
-     - Interaction terms (e.g., `humidity × vorticity`)
-     - Seasonal categorical flags
-     - Normalized/scaled features
-   - Consider area weighting if computing region totals.
-
-4. **Train/test splitting**
-
-   - **Primary (temporal):**
-     - Train on earliest 70% of days
-     - Test on latest 30% of days
-
-   - **Secondary (spatial):**
-     - Hold out 10–20% of grid cells entirely for testing.
-     - Report performance on these held-out locations.
-
-5. **Modeling**
-
-   - Main models:
-     - Multiple Linear Regression (OLS) — interpretability
-     - Ridge Regression (alpha tuned) — stability
-   - Stronger nonlinear baseline (if resources allow):
-     - Random Forest or XGBoost
-   - Choose final “primary” model based on:
-     - Performance vs complexity
-     - Interpretability requirements
-
-6. **Calibration & bias correction**
-
-   - If systematic bias exists (e.g., underprediction of heavy rain):
-     - Fit a simple bias correction model on validation:
-       - `IMC_true ~ a * pred + b`
-     - Apply bias correction to predictions.
-   - Report:
-     - Metrics before and after bias correction.
-
-7. **Uncertainty estimates**
-
-   - At minimum:
-     - Compute variance of residuals.
-     - Provide prediction intervals using residual standard deviation.
-   - Or:
-     - Use ensemble models (e.g., RF/XGBoost) for uncertainty via spread.
-
-8. **Final evaluation report**
-
-   - Include:
-     - Full metrics (MAE, RMSE, R²)
-     - Spatial error maps (e.g., spatial RMSE)
-     - Per-month or seasonal performance
-     - Performance on heavy-rain events (tail behavior)
-
-9. **Final artifacts**
-
-   - Save final model:
-     - `models/model_final.pkl`
-   - Attach metadata JSON:
-     - Feature list
-     - Training date range
-     - Grid specification
-     - Preprocessing steps (needed for inference)
-
-   - Deployable components:
-     - Inference script
-     - Mapping: `grid_id → model features`
-     - API wrapper (FastAPI/Flask)
-     - Basic frontend for querying and visualization
-
-### 5.4.3 Deliverables (Frame D)
-
-- `data_processed/frame_final/` shards + consolidated table
-- `models/model_final.pkl` + metadata JSON
-- Full evaluation report and figures
-- Deployment-ready API skeleton + small demo (frontend showing place → prediction)
 
 ---
 

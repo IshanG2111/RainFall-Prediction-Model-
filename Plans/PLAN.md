@@ -40,15 +40,15 @@ This phase is about **pipeline correctness**, not accuracy.
 
 ---
 
-## 🟩 PHASE 2 — 7-DAY PIPELINE (Small Dataset, Early Modeling)
+## 🟩 PHASE 2 — 8-DAY PIPELINE (Small Dataset, Early Modeling)
 
 ### 🎯 Goal
-Process 7 consecutive days of data using your validated pipeline, and prepare a dataset large enough for basic model training.
+Process 8 different days of data using your validated pipeline, and prepare a dataset large enough for basic model training.
 
 ### 🧩 Key Tasks
 
 1. **Data Acquisition**
-   - Download 7 days of all required datasets.
+   - Download 8 days of all required datasets.
 
 2. **Data Processing**
    - Run the already-tested daily conversion & grid mapping.
@@ -75,15 +75,15 @@ Enough samples for:
 
 ---
 
-## 🟧 PHASE 3 — 15-DAY PIPELINE (Intermediate Scale + Advanced Features)
+## 🟧 PHASE 3 — 90-DAY PIPELINE (Advanced Features)
 
 ### 🎯 Goal
-Work with a medium-sized dataset to improve the data quality and add meaningful physical features.
+Work with a large-sized dataset to improve the data quality and add meaningful physical features.
 
 ### 🧩 Key Tasks
 
 1. **Data Acquisition**
-   - Download 15 days of all required datasets.
+   - Download 90 days of all required datasets.
 
 2. **Data Processing**
    - Run the full pipeline (now stable from Phases 1 & 2).
@@ -96,7 +96,7 @@ Work with a medium-sized dataset to improve the data quality and add meaningful 
      - `seasonality flags`
 
 3. **Data Export**
-   - Export dataset: `daily_dataset_15d.parquet`.
+   - Export dataset: `daily_dataset_90d.parquet`.
 
 ### 📤 Output (for teammates)
 Enough size for:
@@ -110,55 +110,4 @@ Enough size for:
 3. No bottlenecks in preprocessing
 
 ---
-
-## 🟥 PHASE 4 — FINAL 60–90 DAY PIPELINE (Production Dataset + Deployment)
-
-### 🎯 Goal
-Produce the full dataset for final model training + backend integration.
-
-### 🧩 Key Tasks
-
-1. **Data Acquisition**
-   - Download 60–90 days of all required datasets.
-
-2. **Data Processing**
-   - Run the full, validated pipeline.
-   - Add all engineered features from previous phases.
-
-3. **Data Export**
-   - Export dataset: `daily_dataset_final.parquet`.
-
-### 📤 Output (for teammates)
-1. Final dataset for model training
-2. Backend API for predictions
-3. Frontend UI for user interaction
-
-### 🎯 Success Criteria
-1. Final dataset complete & clean
-2. Final model trained
-3. API + UI working
-4. Project report ready
-
----
-
-## 🧭 HOW YOU WILL USE THIS MASTER ROADMAP
-
-You will now create 4 new chats, named like:
-- ✔ Phase 1: 2-Day Pipeline
-- ✔ Phase 2: 7-Day Pipeline
-- ✔ Phase 3: 15-Day Pipeline
-- ✔ Phase 4: Final Dataset & Deployment
-
-Inside each new chat, say:
-
-> "Give me the detailed roadmap for this phase."
-
-And I'll generate the full detailed per-phase roadmap, including:
-- Step-by-step tasks
-- Subtasks
-- Deliverables
-- QC checklists
-- Folder structure
-- Outputs for teammates
-
 Each phase will stay clean and isolated.
