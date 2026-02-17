@@ -6,7 +6,10 @@ import os
 from datetime import datetime, timedelta
 from model import PhysicsConstraints
 
-app = Flask(__name__)
+# Resolve project root (one level up from src/)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'))
 
 # Global variables
 model_data = None
@@ -20,7 +23,7 @@ def load_resources():
     global model_data, model, metrics, scaler, grid_df, master_df
     
     # Load Model
-    model_path = 'models/model_frame_1.pkl'
+    model_path = os.path.join(BASE_DIR, 'models', 'model_frame_1.pkl')
     if os.path.exists(model_path):
         with open(model_path, 'rb') as f:
             model_data = pickle.load(f)
@@ -38,14 +41,14 @@ def load_resources():
         print("Model not found. Please run training script (model.py).")
         
     # Load Grid
-    grid_path = 'data_processed/2_days/grid/grid_definition.parquet'
+    grid_path = os.path.join(BASE_DIR, 'data', 'grid', 'grid_definition.parquet')
     if os.path.exists(grid_path):
         grid_df = pd.read_parquet(grid_path)
         print(f"Grid loaded: {len(grid_df)} cells.")
     else:
         print("Grid file not found.")
     # Load Master Dataset for realistic sampling
-    master_path = 'data_processed/2_days/finaldata/3months_dataset.parquet'
+    master_path = os.path.join(BASE_DIR, 'data', 'finaldata', '3months_dataset.parquet')
     if os.path.exists(master_path):
         master_df = pd.read_parquet(master_path)
         print(f"Master dataset loaded: {len(master_df)} records.")
@@ -256,10 +259,11 @@ def get_cities():
 @app.route('/map-data', methods=['GET'])
 def get_map_data():
     try:
-        if not os.path.exists('data_processed/2_days/grid/grid_definition.parquet'):
+        grid_path = os.path.join(BASE_DIR, 'data', 'grid', 'grid_definition.parquet')
+        if not os.path.exists(grid_path):
              return jsonify([])
         
-        grid = pd.read_parquet('data_processed/2_days/grid/grid_definition.parquet')
+        grid = pd.read_parquet(grid_path)
         if master_df is not None:
              # Just map some real data
             vis_df = master_df.copy()

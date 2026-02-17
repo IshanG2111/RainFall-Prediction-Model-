@@ -8,9 +8,10 @@ import pickle
 import os
 import warnings
 
-import warnings
-
 warnings.filterwarnings('ignore')
+
+# Resolve project root (one level up from src/)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class PhysicsConstraints:
     """
@@ -132,7 +133,9 @@ class PhysicsConstraints:
         return final_rain, reason
 
 class RainfallPredictor:
-    def __init__(self, data_path='data_processed/2_days/finaldata/3months_dataset.parquet'):
+    def __init__(self, data_path=None):
+        if data_path is None:
+            data_path = os.path.join(BASE_DIR, 'data', 'finaldata', '3months_dataset.parquet')
         """Initialize the rainfall prediction model"""
         self.data_path = data_path
         self.models = {} # Store multiple models (quantile)
@@ -379,7 +382,9 @@ class RainfallPredictor:
         }
         print(f"\nFinal Reporting Metrics: {self.metrics}")
 
-    def save_model(self, filepath='models/model_frame_1.pkl'):
+    def save_model(self, filepath=None):
+        if filepath is None:
+            filepath = os.path.join(BASE_DIR, 'models', 'model_frame_1.pkl')
         """Save the trained model and artifacts"""
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         
