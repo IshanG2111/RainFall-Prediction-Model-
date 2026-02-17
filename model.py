@@ -132,7 +132,7 @@ class PhysicsConstraints:
         return final_rain, reason
 
 class RainfallPredictor:
-    def __init__(self, data_path='data_processed/2_days/finaldata/sn_data.parquet'):
+    def __init__(self, data_path='data_processed/2_days/finaldata/3months_dataset.parquet'):
         """Initialize the rainfall prediction model"""
         self.data_path = data_path
         self.models = {} # Store multiple models (quantile)

@@ -45,7 +45,7 @@ def load_resources():
     else:
         print("Grid file not found.")
     # Load Master Dataset for realistic sampling
-    master_path = 'data_processed/2_days/finaldata/satya_raw.parquet'
+    master_path = 'data_processed/2_days/finaldata/3months_dataset.parquet'
     if os.path.exists(master_path):
         master_df = pd.read_parquet(master_path)
         print(f"Master dataset loaded: {len(master_df)} records.")
