@@ -163,11 +163,11 @@ def predict():
         current_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d")
         
 
-        # Feature columns must match training exactly - Updated to match model.py
         # Feature columns must match training exactly - Updated to match model.py order
         feature_cols = [
             'wind_speed', 'uth', 'olr', 'lst_k', 'cer', 'cot', 'hem',
-            'day_sin', 'day_cos', 'week_sin', 'week_cos'
+            'day_sin', 'day_cos', 'week_sin', 'week_cos',
+            'olr_uth_interaction', 'temp_moisture'
         ]
 
         for i in range(7):
@@ -184,6 +184,10 @@ def predict():
             features_dict['day_cos'] = np.cos(2 * np.pi * day_of_year / 366)
             features_dict['week_sin'] = np.sin(2 * np.pi * week_of_year / 53)
             features_dict['week_cos'] = np.cos(2 * np.pi * week_of_year / 53)
+
+            # 3. Add Interaction Features
+            features_dict['olr_uth_interaction'] = (300 - features_dict.get('olr', 250)) * features_dict.get('uth', 40)
+            features_dict['temp_moisture'] = features_dict.get('lst_k', 300) * (features_dict.get('uth', 40) / 100)
 
             # 4. Create DataFrame for Input
             input_data = [features_dict.get(col, 0) for col in feature_cols]
