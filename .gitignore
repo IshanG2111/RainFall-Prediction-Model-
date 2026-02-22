@@ -4,3 +4,4 @@ models
 src
 templates
 docs
+.env
