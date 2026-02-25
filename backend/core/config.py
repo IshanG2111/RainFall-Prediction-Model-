@@ -9,8 +9,7 @@ ENV_PATH = BASE_DIR / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
 
 class Settings:
-    # OpenCage
-    OPENCAGE_API_KEY: str = os.getenv("OPENCAGE_API_KEY", "")
+    GEOAPIFY_API_KEY: str = os.getenv("GEOAPIFY_API_KEY", "")
     COUNTRY_CODE: str = "in"
     DEFAULT_LIMIT: int = 10
 

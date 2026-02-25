@@ -1,52 +1,47 @@
+import requests
 from typing import List, Dict
-from opencage.geocoder import OpenCageGeocode
-from opencage.geocoder import RateLimitExceededError, NotAuthorizedError
 from backend.core.config import settings
 from backend.utils.cache import TTLCache
 
 class GeocodingService:
-    def __init__(self, geocoder: OpenCageGeocode, cache: TTLCache):
-        self.geocoder = geocoder
+    BASE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
+
+    def __init__(self, cache: TTLCache):
         self.cache = cache
 
     def search_locations(self, query: str) -> List[Dict]:
         query = query.strip()
 
-        # Check cache first
         cached = self.cache.get(query.lower())
         if cached:
             return cached
 
-        try:
-            results = self.geocoder.geocode(
-                query,
-                limit=settings.DEFAULT_LIMIT,
-                countrycode=settings.COUNTRY_CODE,
-                no_annotations=1,
-                language="en",
-            )
-        except RateLimitExceededError:
-            raise Exception("OpenCage rate limit exceeded.")
-        except NotAuthorizedError:
-            raise Exception("Invalid OpenCage API key.")
-        except Exception as e:
-            raise Exception(f"Geocoding error: {str(e)}")
+        params = {
+            "text": query,
+            "limit": settings.DEFAULT_LIMIT,
+            "filter": f"countrycode:{settings.COUNTRY_CODE}",
+            "lang": "en",
+            "apiKey": settings.GEOAPIFY_API_KEY,
+        }
+
+        response = requests.get(self.BASE_URL, params=params)
+        response.raise_for_status()
+
+        data = response.json()
+
+        features = data.get("features", [])
 
         formatted_results = []
 
-        for result in results:
-            if "geometry" not in result:
-                continue
+        for feature in features:
+            properties = feature.get("properties", {})
 
-            formatted_results.append(
-                {
-                    "place": result.get("formatted"),
-                    "lat": result["geometry"]["lat"],
-                    "lon": result["geometry"]["lng"],
-                }
-            )
+            formatted_results.append({
+                "place": properties.get("formatted"),
+                "lat": properties.get("lat"),
+                "lon": properties.get("lon"),
+            })
 
-        # Store in cache
         self.cache.set(query.lower(), formatted_results)
 
         return formatted_results
