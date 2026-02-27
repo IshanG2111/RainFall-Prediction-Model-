@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=ENV_PATH)
 class Settings:
     GEOAPIFY_API_KEY: str = os.getenv("GEOAPIFY_API_KEY", "")
     COUNTRY_CODE: str = "in"
-    DEFAULT_LIMIT: int = 10
+    DEFAULT_LIMIT: int = 5
 
     # Cache
     CACHE_TTL_SECONDS: int = 60 * 60  # 1 hour
