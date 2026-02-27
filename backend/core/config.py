@@ -10,11 +10,11 @@ load_dotenv(dotenv_path=ENV_PATH)
 
 class Settings:
     GEOAPIFY_API_KEY: str = os.getenv("GEOAPIFY_API_KEY", "")
-    COUNTRY_CODE: str = "in"
-    DEFAULT_LIMIT: int = 5
+    COUNTRY_CODE: str = "in" #Restricting to India for better relevance and performance
+    DEFAULT_LIMIT: int = 5 #Number of suggestions to return from geocoding API
 
     # Cache
-    CACHE_TTL_SECONDS: int = 60 * 60  # 1 hour
+    CACHE_TTL_SECONDS: int = 60 * 60  #TTL cache data storing for 1 hour
 
     # Validation
     MIN_QUERY_LENGTH: int = 3
