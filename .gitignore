@@ -1,7 +1,4 @@
 .idea
 venv
 models
-src
-templates
-docs
 .env
