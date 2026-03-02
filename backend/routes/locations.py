@@ -5,8 +5,7 @@ from backend.core.dependencies import get_cache
 from backend.services.geocoding_service import GeocodingService
 from backend.core.config import settings
 
-router = APIRouter(prefix="/api", tags=["Locations"]) #Create API router with prefix and tag for location-related endpoints
-
+router = APIRouter(tags=["Locations"]) #Create API router with prefix and tag for location-related endpoints
 
 @router.get("/locations", response_model=List[LocationSuggestion])
 def get_location_suggestions(
