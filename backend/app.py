@@ -16,7 +16,6 @@ async def lifespan(app: FastAPI):
         raise e  # Stop app from starting if critical resources fail
     yield  # Application runs here
 
-
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Rainfall AI Backend",

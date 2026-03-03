@@ -7,7 +7,6 @@ from backend.core.config import settings
 # Cache Singleton
 cache_instance = TTLCache(ttl_seconds=settings.CACHE_TTL_SECONDS)
 
-
 def get_cache() -> TTLCache:
     return cache_instance
 
@@ -65,22 +64,17 @@ def initialize_resources():
 def get_model():
     return _model
 
-
 def get_scaler():
     return _scaler
-
 
 def get_feature_columns():
     return _feature_columns
 
-
 def get_metrics() -> Dict[str, Any]:
     return _metrics
 
-
 def get_grid_df():
     return _grid_df
-
 
 def get_master_df():
     return _master_df

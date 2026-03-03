@@ -7,15 +7,7 @@ from src.model import PhysicsConstraints
 def _get_realistic_features(grid_id: int, date_target: datetime) -> dict:
     master_df = get_master_df()
 
-    default_features = {
-        "hem": 0,
-        "wind_speed": 10,
-        "uth": 40,
-        "olr": 250,
-        "lst_k": 300,
-        "cer": 10,
-        "cot": 10,
-    }
+    default_features = {"hem": 0,"wind_speed": 10,"uth": 40,"olr": 250,"lst_k": 300,"cer": 10,"cot": 10,}
 
     seed = int(grid_id) + date_target.year * 10000 + \
            date_target.month * 100 + date_target.day
@@ -49,7 +41,6 @@ def _get_realistic_features(grid_id: int, date_target: datetime) -> dict:
         features[k] *= rng.uniform(0.95, 1.05)
 
     return features
-
 
 def predict_single_day(grid_id: int,center_lat: float,center_lon: float,date_target: datetime,) -> float:
 
