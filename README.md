@@ -1,6 +1,40 @@
-# 🌦️ Rainfall Prediction Model
+<div align="center">
 
-> An honest, physics-grounded AI system for 7-day rainfall forecasting — powered by **INSAT-3DR satellite data**, a **FastAPI** backend, and a **scikit-learn** ML pipeline.
+<!-- Animated Typing Header -->
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=32&pause=1000&color=4FC3F7&center=true&vCenter=true&width=700&lines=🌦️+Rainfall+Prediction+Model;Satellite-Driven+AI+Forecasting;Honest+%26+Physics-Grounded+ML" alt="Typing SVG" />
+
+<br/>
+
+<!-- Banner Wave -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:4FC3F7,100:1565C0&height=140&section=header&text=7-Day%20Rainfall%20Forecasting%20AI&fontSize=28&fontColor=FFFFFF&animation=fadeIn&fontAlignY=38" width="100%"/>
+
+<br/>
+
+<!-- Badges -->
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-Data-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+<br/>
+
+<!-- Animated Stats Row -->
+![RMSE](https://img.shields.io/badge/RMSE-5.10mm-4FC3F7?style=flat-square&logo=target)
+![R2](https://img.shields.io/badge/R²_Score-0.88-1565C0?style=flat-square&logo=databricks)
+![MAE](https://img.shields.io/badge/MAE-0.54mm-26C6DA?style=flat-square&logo=minutemailer)
+![Records](https://img.shields.io/badge/Training_Records-120,000+-success?style=flat-square&logo=databricks)
+
+</div>
+
+---
+
+<div align="center">
+<i>An honest, physics-grounded AI system for 7-day rainfall forecasting — powered by <b>INSAT-3DR satellite data</b>, a <b>FastAPI</b> backend, and a <b>scikit-learn</b> ML pipeline.</i>
+</div>
+
+<br/>
 
 ![UI Screenshot](docs/screenshot.png)
 
@@ -191,15 +225,44 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 
 ## 🧰 Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Web Framework** | FastAPI + Uvicorn (ASGI) |
-| **ML** | scikit-learn (`HistGradientBoostingRegressor`, Quantile Regression) |
-| **Data** | pandas, NumPy, PyArrow (Parquet) |
-| **Geocoding** | Geoapify Autocomplete API |
-| **Validation** | Pydantic v2 |
-| **Frontend** | HTML / CSS / Vanilla JS |
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Uvicorn](https://img.shields.io/badge/Uvicorn-ASGI-222222?style=for-the-badge&logo=gunicorn&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
+![Pydantic](https://img.shields.io/badge/Pydantic_v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+![Geoapify](https://img.shields.io/badge/Geoapify-Geocoding-FF6B35?style=for-the-badge&logo=mapbox&logoColor=white)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+
+</div>
 
 ---
 
+## 👥 Team
+
+<div align="center">
+
+| | Member |
+|---|--------|
+| 🧑‍💻 | **Ishan** |
+| 🧑‍💻 | **Satya** |
+| 🧑‍💻 | **Saptarshi** |
+| 🧑‍💻 | **Shashwat** |
+
+</div>
+
+---
+
+<div align="center">
+
+<!-- Footer Wave -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1565C0,100:4FC3F7&height=100&section=footer" width="100%"/>
+
 *6th Semester Project — Rainfall Prediction using Satellite Data & Machine Learning*
+
+</div>
