@@ -11,6 +11,7 @@ Backend is implemented using **FastAPI**, a modern, fast (high-performance) web 
 4. **Error Handling**: The backend includes error handling mechanisms to manage invalid inputs, model prediction errors, and other potential issues gracefully.
 5. **Performance Optimization**: The backend is designed to be efficient, ensuring that predictions are returned quickly to provide a smooth user experience on the frontend.
 6. **Security**: Implementing security measures to protect the API endpoints from unauthorized access and potential threats.
+7. **Rate Limiting**: Implementing rate limiting to prevent abuse of the API and ensure fair usage.
 
 ## Implementation Plan:
 1. **Set Up FastAPI**: Initialize a FastAPI application and set up the necessary dependencies.
@@ -56,6 +57,7 @@ Backend is implemented using **FastAPI**, a modern, fast (high-performance) web 
             }
         ]
         ```
+    - Rate Limiting: 15 requests per minute per IP address to prevent abuse and ensure fair usage.
 2. **/api/forecast**: Get rainfall predictions for a specific location and date range.
     - Method: POST
     - Request Body: JSON object containing `location`, `latitude`, `longitude`, `date`.
@@ -118,6 +120,7 @@ Backend is implemented using **FastAPI**, a modern, fast (high-performance) web 
             ]
         }
         ```
+    - Rate Limiting: 5 requests per minute per IP address to prevent abuse and ensure fair usage.
 3. **/api/health**: Check if the backend is running properly.
     - Method: GET
     - Response: JSON object indicating the health status of the backend.
@@ -135,6 +138,7 @@ Backend is implemented using **FastAPI**, a modern, fast (high-performance) web 
 ├── core/
 │   ├── config.py                 # Centralized application settings, environment variables, and model/data file paths
 │   ├── dependencies.py           # Singleton resource loader for model, scaler, grid data, master dataset, and cache
+│   ├── rate_limiter.py           # Centralized shared rate limiter instance for global API traffic control and abuse protection
 ├── routes/
 │   ├── locations.py              # GET /api/locations endpoint for location autocomplete with caching
 │   ├── forecast.py               # POST /api/forecast endpoint that triggers 7-day ML rainfall prediction
