@@ -484,8 +484,11 @@
                 <div class="input-group">
                     <label class="input-label">Location</label>
                     <div class="autocomplete-wrapper">
-                        <input type="text" id="cityInput" name="city" placeholder="Enter Indian city..." required
-                            autocomplete="off" style="width: 100%;">
+                        <input type="text" id="cityInput" placeholder="Enter Indian city..." required autocomplete="off"
+                            style="width: 100%;">
+                        <input type="hidden" id="selectedLat" name="lat">
+                        <input type="hidden" id="selectedLon" name="lon">
+                        <input type="hidden" id="selectedLocation" name="location">
                         <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
                     </div>
                 </div>
@@ -531,8 +534,46 @@
     <!-- Map Logic Completely Removed -->
 
     <script>
-        // --- Chart Logic ---
+        // =============================================================
+        // STATE
+        // =============================================================
         let weatherChart = null;
+        let selectedLocation = null; // { place, lat, lon }
+
+        // =============================================================
+        // CHART
+        // =============================================================
+        function renderChart(labels, rains) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            if (weatherChart) weatherChart.destroy();
+            weatherChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Rainfall (mm)',
+                        data: rains,
+                        backgroundColor: 'rgba(6, 182, 212, 0.5)',
+                        borderColor: 'rgba(6, 182, 212, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#94a3b8' },
+                            title: { display: true, text: 'Rainfall (mm)', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
 
         function renderChart(dates, rains, temps) {
             const ctx = document.getElementById('weatherChart').getContext('2d');
@@ -604,7 +645,9 @@
             });
         }
 
-        // --- Rain Animation Engine ---
+        // =============================================================
+        // RAIN ANIMATION ENGINE
+        // =============================================================
         const canvas = document.getElementById('rainCanvas');
         const ctx = canvas.getContext('2d');
         let drops = [];
@@ -695,154 +738,160 @@
             }
         }
 
-        // --- App Logic ---
+        // =============================================================
+        // FORECAST FORM SUBMIT
+        // =============================================================
         document.getElementById('predictForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            if (!selectedLocation) {
+                alert('Please select a location from the dropdown.');
+                return;
+            }
+
             const loader = document.getElementById('loader');
             const results = document.getElementById('resultsArea');
-            const metricsDisplay = document.getElementById('modelMetrics');
-            const gridDisplay = document.getElementById('gridInfo');
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+            const dateVal = document.getElementById('startDate').value;
 
             loader.style.display = 'block';
             results.classList.add('hidden');
-            metricsDisplay.classList.add('hidden');
-            gridDisplay.classList.add('hidden');
 
             try {
-                const response = await fetch('/predict', {
+                const payload = {
+                    location: selectedLocation.place,
+                    lat: selectedLocation.lat,
+                    lon: selectedLocation.lon,
+                    date: dateVal,
+                };
+
+                const response = await fetch('/api/forecast', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload),
                 });
 
-                const jsonResponse = await response.json();
                 loader.style.display = 'none';
 
-                if (jsonResponse.error) {
-                    alert(jsonResponse.error);
+                if (!response.ok) {
+                    const err = await response.json();
+                    alert(err.detail || 'Forecast failed.');
                     return;
                 }
 
-                // Parse predictions and metrics
-                const predictions = jsonResponse.predictions;
-                const metrics = jsonResponse.model_metrics;
-                const gridInfo = jsonResponse.grid_info;
+                const json = await response.json();
+                // json: { location, coordinates: {lat, lon}, forecast: [{date, rainfall_mm, status}] }
 
-                // Show Metrics
-                if (metrics) {
-                    metricsDisplay.innerHTML = `
-                        <span>RMSE: <strong>${metrics.RMSE}</strong></span>
-                        <span>R² Score: <strong>${metrics.R2}</strong></span>
-                        <span>Test Samples: ${metrics.Test_Samples || 'N/A'}</span>
-                    `;
-                    metricsDisplay.classList.remove('hidden');
-                }
+                renderResults(json);
 
-                // Show Grid Info
-                if (gridInfo) {
-                    gridDisplay.innerHTML = `
-                        <span style="font-weight: 600;">GRID ID: ${gridInfo.grid_id}</span>
-                        <span style="font-weight: 300; opacity: 0.8; font-size: 0.8em; margin-left: 10px;">
-                            (Lat: ${gridInfo.latitude.toFixed(3)}, Lon: ${gridInfo.longitude.toFixed(3)})
-                        </span>
-                    `;
-                    gridDisplay.classList.remove('hidden');
-                }
-
-                renderResults(predictions);
-
-                // Prepare Chart Data
-                const labels = predictions.map(p => p.Date.split(',')[0]);
-                const rainData = predictions.map(p => parseFloat(p.Predicted_Rainfall.split(' ')[0]));
-                const tempData = predictions.map(p => parseFloat(p.Temperature.split(' ')[0]));
-
-                renderChart(labels, rainData, tempData);
+                const labels = json.forecast.map(d => fmtDate(d.date).split(',')[0]);
+                const rainData = json.forecast.map(d => d.rainfall_mm);
+                renderChart(labels, rainData);
 
                 results.classList.remove('hidden');
                 results.classList.add('fade-in');
 
-                // Update rain based on tomorrow's forecast
-                updateRainIntensity(predictions[0].Status);
+                updateRainIntensity(json.forecast[0].status);
 
-                // Add Map Rendering
-                if (gridInfo) {
-                    renderMap(gridInfo.latitude, gridInfo.longitude, predictions[0].RainProbability);
-                }
+                renderMap(json.coordinates.lat, json.coordinates.lon, json.forecast[0].rainfall_mm);
 
             } catch (err) {
                 console.error(err);
                 loader.style.display = 'none';
-                alert("Failed to fetch predictions");
+                alert('Failed to fetch forecast. Please try again.');
             }
         });
 
+        // =============================================================
+        // HELPERS
+        // =============================================================
         function getWeatherIcon(status) {
-            if (status.includes("Heavy")) return "⛈️";
-            if (status.includes("Moderate")) return "🌧️";
-            if (status.includes("Light")) return "🌦️";
-            return "☁️";
+            if (status.includes('Heavy')) return '⛈️';
+            if (status.includes('Moderate')) return '🌧️';
+            if (status.includes('Light')) return '🌦️';
+            return '☁️';
         }
 
-        function renderResults(data) {
-            const tomorrow = data[0];
+        function getStatusColor(status) {
+            if (status.includes('Heavy')) return '#ef4444';
+            if (status.includes('Moderate')) return '#f59e0b';
+            if (status.includes('Light')) return '#3b82f6';
+            return '#94a3b8';
+        }
+
+        /** Format ISO date string → 'Mon, Mar 03' */
+        function fmtDate(iso) {
+            return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+                weekday: 'short', month: 'short', day: '2-digit'
+            });
+        }
+
+        /** Rain probability heuristic from rainfall_mm */
+        function rainProb(mm) {
+            return Math.min(100, Math.round(100 * (1 - Math.exp(-mm / 5))));
+        }
+
+        // =============================================================
+        // RENDER RESULTS  (new API: {location, coordinates, forecast:[]})
+        // =============================================================
+        function renderResults(json) {
+            const forecast = json.forecast;
+            const tomorrow = forecast[0];
             const heroCard = document.getElementById('heroCard');
             const grid = document.getElementById('forecastGrid');
-            const details = tomorrow.Details || {};
+            const prob = rainProb(tomorrow.rainfall_mm);
+
+            // Show location badge
+            const gridDisplay = document.getElementById('gridInfo');
+            gridDisplay.innerHTML = `<span style="font-weight:600">${json.location}</span>
+                <span style="opacity:.7;font-size:.8em;margin-left:10px">
+                    ${json.coordinates.lat.toFixed(3)}°N, ${json.coordinates.lon.toFixed(3)}°E
+                </span>`;
+            gridDisplay.classList.remove('hidden');
 
             // Hero Card
             heroCard.innerHTML = `
                 <div class="hero-left">
-                    <div class="date">${tomorrow.Date}</div>
-                    <h2>${tomorrow.Predicted_Rainfall.split(' ')[0]}<span style="font-size: 1.5rem">mm</span></h2>
-                    <div class="status-badge" style="color: ${getStatusColor(tomorrow.Status)}">${tomorrow.Status}</div>
+                    <div class="date">${fmtDate(tomorrow.date)}</div>
+                    <h2>${tomorrow.rainfall_mm.toFixed(1)}<span style="font-size:1.5rem">mm</span></h2>
+                    <div class="status-badge" style="color:${getStatusColor(tomorrow.status)}">${tomorrow.status}</div>
                 </div>
                 <div class="hero-center animate-float">
-                    <div class="weather-icon-large">${getWeatherIcon(tomorrow.Status)}</div>
-                    <div style="color: var(--accent-cyan); font-weight: 600;">Prob: ${tomorrow.RainProbability}%</div>
+                    <div class="weather-icon-large">${getWeatherIcon(tomorrow.status)}</div>
+                    <div style="color:var(--accent-cyan);font-weight:600">Rain Probability: ${prob}%</div>
                 </div>
                 <div class="hero-right">
                     <div class="detail-row">
-                        <span class="detail-label" title="Land Surface Temperature">Satellite LST</span>
-                        <span class="detail-value">${tomorrow.Temperature}</span>
-                    </div>
-                     <div class="detail-row">
-                        <span class="detail-label">Humidity</span>
-                        <span class="detail-value">${tomorrow.Humidity}</span>
-                    </div>
-                     <div class="detail-row">
-                        <span class="detail-label">Wind Speed</span>
-                        <span class="detail-value">${details['Wind Speed']}</span>
+                        <span class="detail-label">Location</span>
+                        <span class="detail-value">${json.location}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">COT / CER</span>
-                        <span class="detail-value">${details.COT} / ${details.CER}</span>
+                        <span class="detail-label">Coordinates</span>
+                        <span class="detail-value">${json.coordinates.lat.toFixed(3)}°, ${json.coordinates.lon.toFixed(3)}°</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Pressure (OLR)</span>
-                        <span class="detail-value">${tomorrow.Pressure}</span>
+                        <span class="detail-label">7-day Peak</span>
+                        <span class="detail-value">${Math.max(...forecast.map(d => d.rainfall_mm)).toFixed(1)} mm</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">7-day Total</span>
+                        <span class="detail-value">${forecast.reduce((s, d) => s + d.rainfall_mm, 0).toFixed(1)} mm</span>
                     </div>
                 </div>
             `;
 
-            // Grid
-            grid.innerHTML = data.slice(1).map((day, i) => {
-                const d = day.Details || {};
-                return `
-                <div class="glass glass-card day-card fade-in" style="animation-delay: ${i * 0.1}s">
-                    <div class="day-name">${day.Date.split(',')[0]}</div>
-                    <div class="day-icon">${getWeatherIcon(day.Status)}</div>
-                    <div class="day-temp">${day.Temperature}</div>
-                    <div class="day-rain">${day.Predicted_Rainfall}</div>
-                    
-                     <div class="satellite-details">
-                        <span>LST: ${day.Temperature}</span>
-                        <span>COT: ${d.COT || '-'}</span>
+            // 7-day grid (skip first = tomorrow, shown in hero)
+            grid.innerHTML = forecast.slice(1).map((day, i) => `
+                <div class="glass glass-card day-card fade-in" style="animation-delay:${i * 0.1}s">
+                    <div class="day-name">${fmtDate(day.date).split(',')[0]}</div>
+                    <div class="day-icon">${getWeatherIcon(day.status)}</div>
+                    <div class="day-temp" style="color:${getStatusColor(day.status)}">${day.status}</div>
+                    <div class="day-rain">${day.rainfall_mm.toFixed(1)} mm</div>
+                    <div class="satellite-details">
+                        <span>Prob: ${rainProb(day.rainfall_mm)}%</span>
+                        <span>${fmtDate(day.date).split(', ')[1]}</span>
                     </div>
                 </div>
-            `}).join('');
+            `).join('');
         }
 
         function getStatusColor(status) {
@@ -852,33 +901,41 @@
             return "#94a3b8";
         }
 
-        // --- Autocomplete Logic ---
+        // =============================================================
+        // AUTOCOMPLETE  →  GET /api/locations?q=
+        // Response shape: [{place, lat, lon}]
+        // =============================================================
         const cityInput = document.getElementById('cityInput');
         const autocompleteDropdown = document.getElementById('autocompleteDropdown');
         let debounceTimer;
 
         cityInput.addEventListener('input', function () {
             clearTimeout(debounceTimer);
-            const query = this.value;
+            const query = this.value.trim();
 
-            if (query.length < 2) {
+            // Reset stored selection when user types again
+            selectedLocation = null;
+
+            if (query.length < 3) {
                 autocompleteDropdown.style.display = 'none';
                 return;
             }
 
             debounceTimer = setTimeout(async () => {
                 try {
-                    const res = await fetch('/autocomplete?q=' + encodeURIComponent(query));
-                    const suggestions = await res.json();
+                    const res = await fetch('/api/locations?q=' + encodeURIComponent(query));
+                    if (!res.ok) { autocompleteDropdown.style.display = 'none'; return; }
+                    const suggestions = await res.json(); // [{place, lat, lon}]
 
                     if (suggestions.length > 0) {
                         autocompleteDropdown.innerHTML = '';
-                        suggestions.forEach(city => {
+                        suggestions.forEach(loc => {
                             const div = document.createElement('div');
                             div.className = 'autocomplete-item';
-                            div.textContent = city;
+                            div.textContent = loc.place;
                             div.addEventListener('click', () => {
-                                cityInput.value = city;
+                                selectedLocation = loc;      // store {place, lat, lon}
+                                cityInput.value = loc.place;
                                 autocompleteDropdown.style.display = 'none';
                             });
                             autocompleteDropdown.appendChild(div);
@@ -888,23 +945,25 @@
                         autocompleteDropdown.style.display = 'none';
                     }
                 } catch (e) {
-                    console.error("Autocomplete failed", e);
+                    console.error('Autocomplete failed', e);
                 }
-            }, 300); // 300ms debounce
+            }, 300);
         });
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', (e) => {
             if (!cityInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
                 autocompleteDropdown.style.display = 'none';
             }
         });
 
-        // Leaflet Map Logic
+        // =============================================================
+        // MAP  (Leaflet)
+        // =============================================================
         let weatherMap = null;
         let mapMarker = null;
 
-        function renderMap(lat, lon, rainProb) {
+        function renderMap(lat, lon, rainfall_mm) {
             setTimeout(() => {
                 const mapDiv = document.getElementById('map');
                 if (!mapDiv) return;
@@ -920,19 +979,16 @@
                     weatherMap.setView([lat, lon], 10);
                 }
 
-                if (mapMarker) {
-                    weatherMap.removeLayer(mapMarker);
-                }
+                if (mapMarker) weatherMap.removeLayer(mapMarker);
 
-                let color = '#3b82f6'; // Light rain/blue
-                if (rainProb > 70) color = '#ef4444'; // Heavy rain/red
-                else if (rainProb > 30) color = '#f59e0b'; // Moderate/orange
+                // Color by rainfall amount
+                let color = '#94a3b8';
+                if (rainfall_mm >= 15) color = '#ef4444';
+                else if (rainfall_mm >= 2.5) color = '#f59e0b';
+                else if (rainfall_mm >= 0.1) color = '#3b82f6';
 
                 mapMarker = L.circle([lat, lon], {
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.5,
-                    radius: 15000 // 15km
+                    color, fillColor: color, fillOpacity: 0.5, radius: 15000
                 }).addTo(weatherMap);
 
                 weatherMap.invalidateSize();

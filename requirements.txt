@@ -1,4 +1,4 @@
-flask
+# Core ML & data
 pandas
 numpy
 scikit-learn
@@ -6,3 +6,11 @@ pyarrow
 fastparquet
 requests
 python-dotenv
+
+# Web framework (FastAPI backend)
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+jinja2
+aiofiles
