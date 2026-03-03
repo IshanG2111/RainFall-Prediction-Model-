@@ -11,7 +11,6 @@ async def lifespan(app: FastAPI):
     # Startup Logic
     try:
         initialize_resources()
-        print("Backend resources initialized successfully")
     except Exception as e:
         print(f"Resource initialization failed: {e}")
         raise e  # Stop app from starting if critical resources fail

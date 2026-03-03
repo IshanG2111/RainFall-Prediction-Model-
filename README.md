@@ -4,8 +4,6 @@ This project implements an advanced, scientifically grounded AI system for rainf
 
 Unlike standard "black box" models, this system is designed to be **Honest** (transparent evaluation, proper uncertainty quantification) and **Realistic** (enforcing physical meteorological laws).
 
-![UI Screenshot](docs/screenshot.png)
-
 ## 🚀 Key Innovation: Honest & Realistic AI
 
 ### 1. Honest Evaluation
@@ -13,7 +11,7 @@ Unlike standard "black box" models, this system is designed to be **Honest** (tr
 -   **Data Integrity**: The model learns from **broken/incomplete data** (handling missing sensor readings) rather than discarding 75% of the dataset.
 
 ### 2. Realistic Physics
--   **Physics Constraints**: Post-processing logic enforces meoreological rules (e.g., *Clear Sky = No Rain*) to stop the AI from "hallucinating" rain.
+-   **Physics Constraints**: Post-processing logic enforces meteorological rules (e.g., *Clear Sky = No Rain*) to stop the AI from "hallucinating" rain.
 -   **Uncertainty Quantification**: The model predicts both the **Most Likely Rain** and an **Extreme Scenario (95th Percentile)** to capture cyclone risks.
 
 ## 📡 Features
@@ -52,23 +50,26 @@ Tested on ~120,000 records using Time-Series Split:
 ### 1. Train the Model
 Train the HistGradientBoosting Regressor (Main + Quantile Models).
 ```bash
-python model.py
+python training.py
 ```
 *Saves trained models to `models/model_frame_1.pkl`.*
 
-### 2. Start the Application
-Launch the Flask web server.
+### 2. Run backend
+Run FastAPI backend for inference.This will load the trained model and serve predictions.Then test all the API endpoints using Postman or Swagger UI.
+1. /api/loctions - Get available locations based on user entered query.
+2. /api/forecast - Get rainfall predictions for a specific location and dates.
+3. /api/health - Check if everything in backend is running properly or not.
+
 ```bash
-python app.py
+uvicorn backend.app:app --reload
 ```
 *Access the app at `http://127.0.0.1:5000`*
 
 ## 📂 Project Structure
 
-*   `app.py`: Flask web application (Inference Engine).
-*   `model.py`: Training script with Physics Constraints & Validation.
-*   `Rainfall_Prediction_Features.md`: Detailed feature documentation.
-*   `physics.md`: Scientific background & Applied constraints.
+*   `/backend/app.py`: FastApi backend with proper model connection.
+*   `training.py`: Training script with Physics Constraints & Validation.
+*   `model.py`: Physics constrains used by training script and backend.
 *   `data_processed/`: Processed parquet datasets.
 *   `models/`: Trained model binaries.
 
