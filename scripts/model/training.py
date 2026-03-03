@@ -7,7 +7,7 @@ from sklearn.inspection import permutation_importance
 import pickle
 import os
 import warnings
-from model import PhysicsConstraints
+from scripts.model.model import PhysicsConstraints
 
 warnings.filterwarnings('ignore')
 
