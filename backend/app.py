@@ -1,28 +1,45 @@
+import logging
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from pathlib import Path
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from backend.routes.locations import router as location_router
 from backend.routes.forecast import router as forecast_router
 from backend.routes.health import router as health_router
 from backend.routes.frontend import router as frontend_router
 from backend.core.dependencies import initialize_resources
+from backend.core.config import settings
+from backend.core.rate_limiter import limiter
 
-_BASE_DIR = Path(__file__).resolve().parent.parent
-_STATIC_DIR = _BASE_DIR / "static"
+# Project root directory (parent of backend/)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+# Logging Configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
+# Application Lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup Logic
     try:
+        logger.info("Initializing backend resources...")
         initialize_resources()
-    except Exception as e:
-        print(f"Resource initialization failed: {e}")
-        raise e  # Stop app from starting if critical resources fail
-    yield  # Application runs here
+        logger.info("Backend resources initialized successfully.")
+    except Exception:
+        logger.exception("Resource initialization failed.")
+        raise
+    yield
+    logger.info("Application shutdown complete.")
 
-
+# App Factory
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Rainfall AI Backend",
@@ -34,21 +51,35 @@ def create_app() -> FastAPI:
     # CORS Configuration
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # TODO: Restrict this in production to specific domains
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # Serve static files (CSS, JS, assets)
-    if _STATIC_DIR.exists():
-        app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+    # Attach limiter
+    app.state.limiter = limiter
+    app.add_exception_handler(
+        RateLimitExceeded,
+        lambda request, exc: JSONResponse(
+            status_code=429,
+            content={"detail": "Rate limit exceeded. Please try again later."},
+        ),
+    )
+    app.add_middleware(SlowAPIMiddleware)
 
-    # Register Routers
-    app.include_router(frontend_router)                           # GET /  → index.html
-    app.include_router(location_router, prefix="/api", tags=["Locations"])
-    app.include_router(forecast_router, prefix="/api", tags=["Forecast"])
-    app.include_router(health_router, prefix="/api", tags=["Health"])
+    # Versioned API prefix
+    API_PREFIX = "/api/v1"
+
+    app.include_router(location_router, prefix=API_PREFIX)
+    app.include_router(forecast_router, prefix=API_PREFIX)
+    app.include_router(health_router, prefix=API_PREFIX)
+
+    # Frontend route (serves index.html at /)
+    app.include_router(frontend_router)
+
+    # Static files (CSS, JS, images)
+    app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
 
     return app
 

@@ -764,7 +764,7 @@
                     date: dateVal,
                 };
 
-                const response = await fetch('/api/forecast', {
+                const response = await fetch('/api/v1/forecast', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
@@ -923,7 +923,7 @@
 
             debounceTimer = setTimeout(async () => {
                 try {
-                    const res = await fetch('/api/locations?q=' + encodeURIComponent(query));
+                    const res = await fetch('/api/v1/locations?q=' + encodeURIComponent(query));
                     if (!res.ok) { autocompleteDropdown.style.display = 'none'; return; }
                     const suggestions = await res.json(); // [{place, lat, lon}]
 

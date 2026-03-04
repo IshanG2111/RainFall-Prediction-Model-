@@ -93,28 +93,29 @@ RainFall-Prediction-Model--IG/
 │   ├── app.py              # Entry-point shim — launches the backend
 │   └── model.py            # Training script: feature engineering, cross-validation, model export
 │
-├── backend/                # FastAPI application (modular architecture)
-│   ├── app.py              # App factory (create_app, lifespan, router registration)
+├── backend/                # FastAPI v2.0 application (modular architecture)
+│   ├── app.py              # App factory (create_app, lifespan, CORS, rate-limiting, router registration)
 │   ├── core/
 │   │   ├── config.py       # Settings and environment variable loading
-│   │   └── dependencies.py # Singleton resources: model, scaler, cache
+│   │   ├── dependencies.py # Singleton resources: model, scaler, grid, master dataset
+│   │   └── rate_limiter.py # Shared slowapi rate-limiter instance
 │   ├── routes/
 │   │   ├── frontend.py     # GET /  → serves index.html
-│   │   ├── health.py       # GET /api/health
-│   │   ├── locations.py    # GET /api/locations?q=<query>
-│   │   └── forecast.py     # POST /api/forecast
+│   │   ├── health.py       # GET /api/v1/health
+│   │   ├── locations.py    # GET /api/v1/locations?q=<query>
+│   │   └── forecast.py     # POST /api/v1/forecast
 │   ├── schemas/
-│   │   ├── request_schema.py   # ForecastRequest (Pydantic input model)
-│   │   ├── forecast_schema.py  # ForecastResponse (Pydantic output model)
-│   │   └── location_schema.py  # LocationSuggestion (Pydantic output model)
+│   │   ├── request_schema.py   # ForecastRequest (Pydantic v2 input model)
+│   │   ├── forecast_schema.py  # ForecastResponse (Pydantic v2 output model)
+│   │   └── location_schema.py  # LocationSuggestion (Pydantic v2 output model)
 │   ├── services/
-│   │   ├── forecast_service.py   # Orchestration layer
-│   │   ├── model_service.py      # Feature engineering + ML inference + physics
+│   │   ├── forecast_service.py   # Orchestration layer (date → grid → model → response)
+│   │   ├── model_service.py      # Feature engineering + ML inference + physics constraints
 │   │   ├── geocoding_service.py  # Geoapify API wrapper with TTL cache
 │   │   ├── grid_service.py       # Maps lat/lon → nearest historical grid cell
 │   │   └── date_service.py       # Generates 7-day forecast date array
 │   └── utils/
-│       └── cache.py              # TTL cache implementation
+│       └── cache.py              # Thread-safe TTL cache implementation
 │
 ├── templates/
 │   └── index.html          # Single-page frontend application
@@ -189,6 +190,8 @@ This runs cross-validated training and saves the fitted model and scaler to `mod
 
 ```bash
 python src/app.py
+# or directly via uvicorn (recommended):
+uvicorn backend.app:app --host 0.0.0.0 --port 5000 --reload
 ```
 
 | Endpoint | URL |
@@ -199,13 +202,15 @@ python src/app.py
 
 ---
 
-## 🔌 API Overview
+## 🔌 API Overview (v1)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Server + model readiness check |
-| `GET` | `/api/locations?q=<query>` | Location autocomplete (≥ 3 chars) |
-| `POST` | `/api/forecast` | 7-day rainfall forecast for a location |
+All API endpoints are versioned under the `/api/v1` prefix. Rate limiting is enforced per IP via `slowapi`.
+
+| Method | Endpoint | Rate Limit | Description |
+|--------|----------|------------|-------------|
+| `GET` | `/api/v1/health` | — | Server + model readiness check |
+| `GET` | `/api/v1/locations?q=<query>` | 15/min | Location autocomplete (≥ 3 chars) |
+| `POST` | `/api/v1/forecast` | 5/min | 7-day rainfall forecast for a location |
 
 See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full request/response schemas, error codes, and frontend integration patterns.
 
