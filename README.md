@@ -1,10 +1,4 @@
 <div align="center">
-
-<!-- Animated Typing Header -->
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=32&pause=1000&color=4FC3F7&center=true&vCenter=true&width=700&lines=🌦️+Rainfall+Prediction+Model;Satellite-Driven+AI+Forecasting;Honest+%26+Physics-Grounded+ML" alt="Typing SVG" />
-
-<br/>
-
 <!-- Banner Wave -->
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:4FC3F7,100:1565C0&height=140&section=header&text=7-Day%20Rainfall%20Forecasting%20AI&fontSize=28&fontColor=FFFFFF&animation=fadeIn&fontAlignY=38" width="100%"/>
 
@@ -21,9 +15,9 @@
 <br/>
 
 <!-- Animated Stats Row -->
-![RMSE](https://img.shields.io/badge/RMSE-5.10mm-4FC3F7?style=flat-square&logo=target)
-![R2](https://img.shields.io/badge/R²_Score-0.88-1565C0?style=flat-square&logo=databricks)
-![MAE](https://img.shields.io/badge/MAE-0.54mm-26C6DA?style=flat-square&logo=minutemailer)
+![RMSE](https://img.shields.io/badge/RMSE-11.71mm-4FC3F7?style=flat-square&logo=target)
+![R2](https://img.shields.io/badge/R²_Score-0.764-1565C0?style=flat-square&logo=databricks)
+![MAE](https://img.shields.io/badge/MAE-3.05mm-26C6DA?style=flat-square&logo=minutemailer)
 ![Records](https://img.shields.io/badge/Training_Records-120,000+-success?style=flat-square&logo=databricks)
 
 </div>
@@ -54,7 +48,15 @@ Most rainfall models are "black boxes" — they look accurate on training data b
 
 ---
 
-## 📊 Model Performance
+## � Recent Improvements
+
+- **Consistent Predictions**: Resolved issues with random feature generation by implementing a deterministic random seed based on location and date. This ensures consistent weather feature simulation across reloads without losing variance.
+- **Enhanced Accuracy**: Added new meteorological interaction features (`olr_uth_interaction`, `temp_moisture`) and implemented Sample Weights to handle class imbalance (zero-inflation bias), significantly improving heavy rainfall predictions.
+- **Automated Tuning**: Replaced hardcoded parameters with `RandomizedSearchCV` for optimal hyperparameter configuration during training.
+
+---
+
+## �📊 Model Performance
 
 Benchmarked on ~120,000 records using a proper Time-Series Split:
 
@@ -92,6 +94,11 @@ RainFall-Prediction-Model--IG/
 ├── src/
 │   ├── app.py              # Entry-point shim — launches the backend
 │   └── model.py            # Training script: feature engineering, cross-validation, model export
+│
+├── frontend/               # React + Vite frontend application
+│   ├── src/                # React components, pages, and hooks
+│   ├── package.json        # Frontend dependencies
+│   └── vite.config.ts      # Vite configuration
 │
 ├── backend/                # FastAPI v2.0 application (modular architecture)
 │   ├── app.py              # App factory (create_app, lifespan, CORS, rate-limiting, router registration)
@@ -220,6 +227,7 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 
 | Document | Description |
 |----------|-------------|
+| [`docs/frontend.md`](docs/frontend.md) | Frontend architecture, setup and UI components |
 | [`docs/backend_architecture.md`](docs/backend_architecture.md) | Full API reference, layer diagram, service pipeline |
 | [`docs/model_architecture.md`](docs/model_architecture.md) | ML model design and training methodology |
 | [`docs/feature_engineering.md`](docs/feature_engineering.md) | Feature construction and selection rationale |
@@ -240,6 +248,9 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 ![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
 ![Pydantic](https://img.shields.io/badge/Pydantic_v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
 ![Geoapify](https://img.shields.io/badge/Geoapify-Geocoding-FF6B35?style=for-the-badge&logo=mapbox&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
