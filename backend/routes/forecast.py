@@ -7,7 +7,7 @@ from backend.core.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=["Forecast"])
 
 @router.post("/forecast", response_model=ForecastResponse)
 @limiter.limit("5/minute")
