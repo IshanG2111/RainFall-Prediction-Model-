@@ -3,7 +3,7 @@ import pandas as pd
 import calendar
 from datetime import datetime
 from backend.core.dependencies import (get_model,get_scaler,get_feature_columns,get_master_df,)
-from src.model import PhysicsConstraints
+from scripts.model.model import PhysicsConstraints
 
 def _get_realistic_features(grid_id: int, date_target: datetime) -> dict:
     master_df = get_master_df()
