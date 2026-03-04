@@ -15,6 +15,12 @@ from backend.core.dependencies import initialize_resources
 from backend.core.config import settings
 from backend.core.rate_limiter import limiter
 
+import mimetypes
+
+# Fix Windows registry MIME type issues for JS modules
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
 # Project root directory (parent of backend/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -75,11 +81,16 @@ def create_app() -> FastAPI:
     app.include_router(forecast_router, prefix=API_PREFIX)
     app.include_router(health_router, prefix=API_PREFIX)
 
-    # Frontend route (serves index.html at /)
-    app.include_router(frontend_router)
+    # Static assets for React frontend must be mounted BEFORE the catch-all router
+    frontend_assets = PROJECT_ROOT / "frontend" / "dist" / "assets"
+    if frontend_assets.exists():
+        app.mount("/assets", StaticFiles(directory=str(frontend_assets)), name="frontend_assets")
 
-    # Static files (CSS, JS, images)
+    # Old Static files (CSS, JS, images) - kept for compatibility if needed
     app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
+
+    # Frontend route (serves index.html at / and handles client-side routing)
+    app.include_router(frontend_router)
 
     return app
 
