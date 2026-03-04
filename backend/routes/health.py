@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from backend.core.dependencies import (get_model,get_scaler,get_feature_columns,get_grid_df)
 
-router = APIRouter()
+router = APIRouter(tags=["Health"])
 
 @router.get("/health")
 def health_check():
