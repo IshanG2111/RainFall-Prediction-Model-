@@ -1,4 +1,8 @@
 import logging
+<<<<<<< HEAD
+from pathlib import Path
+=======
+>>>>>>> eba7c39e8fe79fa2ac967e41bfbf148f9e7c9ce8
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -12,12 +16,30 @@ from backend.core.dependencies import initialize_resources
 from backend.core.config import settings
 from backend.core.rate_limiter import limiter
 
+<<<<<<< HEAD
+import mimetypes
+
+# Fix Windows registry MIME type issues for JS modules
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
+# Project root directory (parent of backend/)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 # Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 
+=======
+# Logging Configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+
+>>>>>>> eba7c39e8fe79fa2ac967e41bfbf148f9e7c9ce8
 logger = logging.getLogger(__name__)
 
 # Application Lifespan
@@ -68,6 +90,20 @@ def create_app() -> FastAPI:
     app.include_router(location_router, prefix=API_PREFIX)
     app.include_router(forecast_router, prefix=API_PREFIX)
     app.include_router(health_router, prefix=API_PREFIX)
+<<<<<<< HEAD
+
+    # Static assets for React frontend must be mounted BEFORE the catch-all router
+    frontend_assets = PROJECT_ROOT / "frontend" / "dist" / "assets"
+    if frontend_assets.exists():
+        app.mount("/assets", StaticFiles(directory=str(frontend_assets)), name="frontend_assets")
+
+    # Old Static files (CSS, JS, images) - kept for compatibility if needed
+    app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
+
+    # Frontend route (serves index.html at / and handles client-side routing)
+    app.include_router(frontend_router)
+=======
+>>>>>>> eba7c39e8fe79fa2ac967e41bfbf148f9e7c9ce8
 
     return app
 

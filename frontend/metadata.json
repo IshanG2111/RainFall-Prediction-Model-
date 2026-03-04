@@ -1,0 +1,5 @@
+{
+  "name": "Precipitate",
+  "description": "A custom themed rainfall map application using Leaflet.",
+  "requestFramePermissions": []
+}
