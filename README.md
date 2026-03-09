@@ -95,11 +95,7 @@ RainFall-Prediction-Model--IG/
 │   ├── app.py              # Entry-point shim — launches the backend
 │   └── model.py            # Training script: feature engineering, cross-validation, model export
 │
-├── frontend/               # React + Vite frontend application
-│   ├── src/                # React components, pages, and hooks
-│   ├── package.json        # Frontend dependencies
-│   └── vite.config.ts      # Vite configuration
-│
+
 ├── backend/                # FastAPI v2.0 application (modular architecture)
 │   ├── app.py              # App factory (create_app, lifespan, CORS, rate-limiting, router registration)
 │   ├── core/
@@ -248,8 +244,7 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 ![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
 ![Pydantic](https://img.shields.io/badge/Pydantic_v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
 ![Geoapify](https://img.shields.io/badge/Geoapify-Geocoding-FF6B35?style=for-the-badge&logo=mapbox&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
+
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)

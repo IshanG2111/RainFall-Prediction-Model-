@@ -4,48 +4,37 @@ This document outlines the architecture, setup, and technologies used in the fro
 
 ## 🛠️ Tech Stack
 
-- **React 19**: Core UI library.
-- **Vite 6**: Fast build tool and development server.
-- **Tailwind CSS 4**: Utility-first CSS framework for styling.
-- **Framer Motion**: For smooth UI animations and transitions.
-- **Leaflet & React-Leaflet**: Interactive map components for location and data mapping.
-- **Recharts**: Render beautiful predictive data charts.
+- **Vanilla HTML5/CSS3/JavaScript**: Core UI elements.
+- **Custom CSS / Glassmorphism**: For styling and layout.
+- **Chart.js**: Render predictive data charts.
+- **Leaflet**: Interactive map components.
+- **Framer Motion**: (via CDN) For smooth UI animations and transitions.
 
 ## 🏗️ Structure
 
-The frontend represents a modern, enhanced user interface built with React, located within the `frontend/` directory. 
+The frontend is a lightweight, single-page application served directly from the backend.
 
 ```text
-frontend/
-├── src/                # React components, routing, and hooks
-├── package.json        # Node dependencies and scripts
-├── vite.config.ts      # Vite build configuration
-└── .env.local          # Environment variables (API integration)
+Project Root/
+├── templates/
+│   └── index.html          # Main HTML entry point containing UI and Logic
+├── static/                 # Static assets (CSS, JS, images, if any)
 ```
 
 ## 🚀 Setup & Installation
 
-**Prerequisites:** Node.js environment
-
-1. **Navigate to the frontend directory**
-    ```bash
-    cd frontend
-    ```
-2. **Install dependencies**
-    ```bash
-    npm install
-    ```
+There is no separate build step for the frontend. It is served concurrently by the FastAPI backend using standard HTML responses.
 
 ## 💻 Running Locally
 
-To run the development server:
+Start the FastAPI backend application. The frontend will be served at the root URL:
 
 ```bash
-npm run dev
+python src/app.py
 ```
 
-The app will typically be available on port 3000 (`http://localhost:3000`).
+The app will be available on `http://localhost:5000`.
 
 ## 🔌 API Integration
 
-Ensure that the FastAPI backend server is also running simultaneously so that the React application can interact with the necessary API endpoints to fetch live forecasts.
+The `templates/index.html` file utilizes Vanilla JavaScript `fetch` calls to asynchronously interact with the local `/api/v1/forecast` and `/api/v1/locations` endpoints to retrieve and display live prediction data.
