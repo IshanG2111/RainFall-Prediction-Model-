@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 function TimelineSlider(){
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(30);
+  const [progress] = useState(30);
 
   const times = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
