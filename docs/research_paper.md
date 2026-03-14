@@ -4,13 +4,13 @@
 
 **Authors:**
 
-Ishan Gupta¹, Satya Prakash¹, Saptarshi Banerjee¹, Shashwat Sharma¹
+Ishan Ghosh, Satya Aman, Saptarshi Roy, Shashwat Narayan
 
 ¹ Department of Computer Science and Engineering
 School of Engineering and Technology
-[University Name — Anonymized for Blind Review], India
+[University Name — KIIT, India
 
-Correspondence: {ishan, satya, saptarshi, shashwat}@university.edu
+Correspondence: {ishan, satya, saptarshi, shashwat}@kiit.ac.in
 
 ---
 
