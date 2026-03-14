@@ -26,11 +26,7 @@ class Settings:
         # CORS / Networking
         self.ALLOWED_ORIGINS: list = os.getenv(
             "ALLOWED_ORIGINS",
-<<<<<<< HEAD
             "http://localhost:5173,http://localhost:3000"
-=======
-            "http://localhost:5173"
->>>>>>> eba7c39e8fe79fa2ac967e41bfbf148f9e7c9ce8
         ).split(",")
 
         self.REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", 5))
