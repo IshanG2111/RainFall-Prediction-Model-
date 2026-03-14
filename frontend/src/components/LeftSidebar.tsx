@@ -42,7 +42,7 @@ export default function LeftSidebar() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`text-left transition-all duration-300 ${
+              className={`text-left transition-all duration-300 cursor-pointer ${
                 isActive 
                   ? 'font-serif text-3xl text-white' 
                   : 'text-sm text-gray-400 hover:text-gray-200'

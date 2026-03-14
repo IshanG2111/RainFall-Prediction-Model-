@@ -13,14 +13,18 @@ export default function App() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = useCallback(async (query: string) => {
+    setIsSearchingLocation(true);
     try {
       const results = await searchLocations(query);
       setLocations(results);
     } catch {
       setLocations([]);
+    } finally {
+      setIsSearchingLocation(false);
     }
   }, []);
 
@@ -70,6 +74,7 @@ export default function App() {
               locations={locations}
               selectedLocation={selectedLocation}
               isLoading={isLoading}
+              isSearchingLocation={isSearchingLocation}
             />
           </div>
           <div className="md:col-span-7 lg:col-span-8">

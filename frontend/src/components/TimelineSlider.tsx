@@ -14,16 +14,16 @@ export default function TimelineSlider() {
         {/* Controls and Current Time */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
+            <button className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors cursor-pointer">
               <SkipBack className="w-4 h-4" />
             </button>
             <button 
-              className="p-3 bg-sky-500 hover:bg-sky-400 text-white rounded-full transition-colors shadow-lg shadow-sky-500/20"
+              className="p-3 bg-sky-500 hover:bg-sky-400 text-white rounded-full transition-colors shadow-lg shadow-sky-500/20 cursor-pointer"
               onClick={() => setIsPlaying(!isPlaying)}
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </button>
-            <button className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
+            <button className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors cursor-pointer">
               <SkipForward className="w-4 h-4" />
             </button>
           </div>

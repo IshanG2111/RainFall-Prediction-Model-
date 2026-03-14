@@ -9,9 +9,10 @@ interface Props {
   locations: Location[];
   selectedLocation: Location | null;
   isLoading: boolean;
+  isSearchingLocation: boolean;
 }
 
-export default function PredictionForm({ onSearch, onSelectLocation, onPredict, locations, selectedLocation, isLoading }: Props) {
+export default function PredictionForm({ onSearch, onSelectLocation, onPredict, locations, selectedLocation, isLoading, isSearchingLocation }: Props) {
   const [locationQuery, setLocationQuery] = useState('');
   const [date, setDate] = useState(() => {
     const tomorrow = new Date();
@@ -25,7 +26,9 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
   // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (locationQuery.length >= 3) {
+    
+    // Only search if length >= 3 and the query isn't just the currently selected location's name
+    if (locationQuery.length >= 3 && locationQuery !== selectedLocation?.place) {
       debounceRef.current = setTimeout(() => {
         onSearch(locationQuery);
         setShowDropdown(true);
@@ -79,13 +82,28 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
           </div>
 
           {/* Autocomplete Dropdown */}
-          {showDropdown && locations.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-900 shadow-[4px_4px_0px_0px_#111827] z-50 max-h-60 overflow-y-auto">
-              {locations.map((loc, idx) => (
+          {showDropdown && (locations.length > 0 || isSearchingLocation) ? (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-900 shadow-[4px_4px_0px_0px_#111827] z-[100] max-h-60 overflow-y-auto w-full">
+              {isSearchingLocation ? (
+                // Skeleton Loader
+                <>
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="w-full text-left px-4 py-3 border-b border-gray-200 last:border-b-0 flex items-center gap-3 animate-pulse">
+                      <div className="w-4 h-4 bg-gray-200 rounded-full flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-1.5"></div>
+                        <div className="h-2.5 bg-gray-100 rounded w-3/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                // Actual Locations
+                locations.map((loc, idx) => (
                 <button
                   key={`${loc.place}-${idx}`}
                   onClick={() => handleSelect(loc)}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors flex items-center gap-3"
+                  className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors flex items-center gap-3 cursor-pointer"
                   id={`location-option-${idx}`}
                 >
                   <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
@@ -94,9 +112,10 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
                     <div className="text-[10px] text-gray-500 font-mono">{loc.lat.toFixed(4)}°, {loc.lon.toFixed(4)}°</div>
                   </div>
                 </button>
-              ))}
+                ))
+              )}
             </div>
-          )}
+          ) : null}
 
           {selectedLocation && (
             <div className="mt-2 text-[10px] text-gray-500 font-mono">
@@ -126,18 +145,18 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
         <button
           onClick={() => onPredict(date)}
           disabled={!selectedLocation || isLoading}
-          className={`sketch-border sketch-button w-full py-4 mt-4 font-bold uppercase tracking-widest text-sm transition-all ${!selectedLocation
-              ? '!bg-gray-200 text-gray-500 cursor-not-allowed'
+          className={`sketch-border sketch-button w-full py-4 mt-4 font-bold uppercase tracking-widest text-sm transition-all cursor-pointer ${!selectedLocation
+              ? '!bg-gray-200 text-gray-500 !cursor-not-allowed'
               : isLoading
-                ? '!bg-gray-900 text-white opacity-80 cursor-wait'
-                : '!bg-gray-900 text-white'
+                ? '!bg-gray-900 text-white opacity-80 !cursor-wait'
+                : '!bg-gray-900 text-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_#111827]'
             }`}
           id="predict-button"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-white" />
-              Predicting...
+              Predicting Forecast...
             </span>
           ) : (
             'Predict Forecast'

@@ -19,7 +19,7 @@ export default function TopNav() {
         {['TODAY', 'TOMORROW', 'RADAR', 'ALERTS'].map((item) => (
           <button 
             key={item} 
-            className="text-[11px] font-bold tracking-[0.15em] text-gray-300 hover:text-white uppercase transition-colors"
+            className="text-[11px] font-bold tracking-[0.15em] text-gray-300 hover:text-white uppercase transition-colors cursor-pointer"
           >
             {item}
           </button>
@@ -28,10 +28,10 @@ export default function TopNav() {
 
       {/* Right Icons */}
       <div className="flex items-center gap-6 pointer-events-auto">
-        <button className="text-gray-300 hover:text-white transition-colors">
+        <button className="text-gray-300 hover:text-white transition-colors cursor-pointer">
           <Search className="w-5 h-5" strokeWidth={2} />
         </button>
-        <button className="text-gray-300 hover:text-white transition-colors">
+        <button className="text-gray-300 hover:text-white transition-colors cursor-pointer">
           <Menu className="w-6 h-6" strokeWidth={2} />
         </button>
       </div>
