@@ -10,9 +10,9 @@
 3. [Application Boot Sequence](#3-application-boot-sequence)
 4. [Layer Architecture](#4-layer-architecture)
 5. [API Reference](#5-api-reference)
-   - [GET /api/health](#get-apihealth)
-   - [GET /api/locations](#get-apilocations)
-   - [POST /api/forecast](#post-apiforecast)
+   - [GET /api/v1/health](#get-apiv1health)
+   - [GET /api/v1/locations](#get-apiv1locations)
+   - [POST /api/v1/forecast](#post-apiv1forecast)
 6. [Data Contracts (Schemas)](#6-data-contracts-schemas)
 7. [Internal Service Pipeline](#7-internal-service-pipeline)
 8. [Rainfall Categories](#8-rainfall-categories)
@@ -47,12 +47,13 @@ RainFall-Prediction-Model--IG/
 │   ├── app.py              # FastAPI app factory (create_app)
 │   ├── core/
 │   │   ├── config.py       # Settings / env vars
-│   │   └── dependencies.py # Singleton resources (model, scaler, cache)
+│   │   ├── dependencies.py # Singleton resources (model, scaler, cache)
+│   │   └── rate_limiter.py # Shared slowapi limiter instance
 │   ├── routes/
 │   │   ├── frontend.py     # GET /  → serves index.html
-│   │   ├── health.py       # GET /api/health
-│   │   ├── locations.py    # GET /api/locations?q=<query>
-│   │   └── forecast.py     # POST /api/forecast
+│   │   ├── health.py       # GET /api/v1/health
+│   │   ├── locations.py    # GET /api/v1/locations?q=<query>
+│   │   └── forecast.py     # POST /api/v1/forecast
 │   ├── schemas/
 │   │   ├── request_schema.py   # ForecastRequest (input)
 │   │   ├── forecast_schema.py  # ForecastResponse (output)
@@ -142,7 +143,7 @@ http://localhost:5000/docs
 
 ---
 
-### GET /api/health
+### GET /api/v1/health
 
 **Purpose:** Check whether the ML model and grid data are loaded and the server is ready.
 
@@ -174,13 +175,13 @@ No parameters, no body.
 
 ---
 
-### GET /api/locations
+### GET /api/v1/locations
 
 **Purpose:** Autocomplete location search. Returns up to `N` matching places within the configured country.
 
 **Request:**
 ```
-GET /api/locations?q=<search_query>
+GET /api/v1/locations?q=<search_query>
 ```
 
 | Parameter | Type | Required | Constraints | Description |
@@ -223,13 +224,13 @@ GET /api/locations?q=<search_query>
 
 ---
 
-### POST /api/forecast
+### POST /api/v1/forecast
 
 **Purpose:** Run 7-day rainfall prediction for a selected location and start date.
 
 **Request:**
 ```
-POST /api/forecast
+POST /api/v1/forecast
 Content-Type: application/json
 ```
 

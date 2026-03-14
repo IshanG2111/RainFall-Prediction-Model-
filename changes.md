@@ -1,17 +1,35 @@
-# Recent Changes
+# Changelog
 
-## 1. Fixed Random/Inconsistent Data on Reload
-**File Modified**: `src/app.py`
-*   **Issue**: On every prediction request, `get_realistic_features` generated entirely random noise for weather features using `pandas.DataFrame.sample()` and `numpy.random.uniform()` without a seed.
-*   **Fix**: Modified `get_realistic_features` to use a **deterministic random seed**. The seed is now calculated using the specific `grid_id` and the `date_target` (Year, Month, Day). This guarantees that identical location and date queries will consistently produce the exact same simulated weather features and predictions across different page reloads, without losing realistic day-to-day variance.
+All notable changes to the Rainfall Prediction Model are documented here.
 
-## 2. Improved Model Accuracy & Reduced "Zero-Inflation" Bias
-**Files Modified**: `src/model.py`, `src/app.py`
-*   **Feature Engineering**: Added two new meteorological interaction features to better capture signals for heavy rainfall (deep convection/storms):
-    *   `olr_uth_interaction`: Combines cold cloud tops (OLR) and moisture (UTH).
-    *   `temp_moisture`: An index combining surface temperature and humidity.
-*   **Class Imbalance Handling**: The dataset contains mostly dry days (0 mm rain), causing the algorithm to inherently underpredict. Implemented **Sample Weights** during training so that days with actual rainfall (`rain_mm > 0`) are weighted significantly higher, penalizing the model more if it misses rain events.
-*   **Hyperparameter Tuning**: Replaced hardcoded model parameters with `RandomizedSearchCV`. The script now tests dozens of combinations of `learning_rate`, `max_depth`, `l2_regularization`, and `max_iter` automatically to select the absolute best-performing configuration for the dataset.
+---
 
-## 3. Retrained Model
-*   Successfully ran the updated `src/model.py` across 1.3 million data points, automatically tuning and saving the significantly more accurate prediction weights over the previous baseline into `models/model_frame_1.pkl`.
+## v2.1.0 — Feature Engineering & Accuracy Improvements
+
+### Fixed
+- **Deterministic Predictions**: Resolved inconsistent results on reload by implementing a deterministic random seed based on `grid_id` and `date_target` in `get_realistic_features()`. Identical queries now return identical forecasts.
+
+### Added
+- **Meteorological Interaction Features**: Two new engineered features improve heavy-rainfall prediction:
+  - `olr_uth_interaction` — Combines deep convection signal (OLR) with upper-level moisture (UTH).
+  - `temp_moisture` — Links surface temperature (LST) with humidity availability.
+- **Sample Weighting**: Rainfall days are now up-weighted during training to counteract the zero-inflation bias inherent in the dataset.
+- **Automated Hyperparameter Tuning**: Replaced hardcoded parameters with `RandomizedSearchCV` to automatically find the optimal `learning_rate`, `max_depth`, `l2_regularization`, and `max_iter`.
+
+### Changed
+- **Retrained Model**: Updated `models/model_frame_1.pkl` with the improved pipeline trained on 1.3M data points.
+
+---
+
+## v2.0.0 — Backend Modernisation
+
+### Changed
+- Migrated backend from monolithic `app.py` to modular **FastAPI v2.0** architecture with `core/`, `routes/`, `schemas/`, `services/`, and `utils/` packages.
+- All API endpoints versioned under `/api/v1/` prefix.
+- Added `slowapi` rate limiting (15 req/min for locations, 5 req/min for forecast).
+- Implemented Pydantic v2 request/response validation.
+
+### Added
+- React + Vite + Tailwind CSS frontend with interactive 7-day forecast dashboard.
+- Geoapify-powered location autocomplete with debounced search.
+- Physics-constrained post-processing to prevent meteorologically impossible predictions.

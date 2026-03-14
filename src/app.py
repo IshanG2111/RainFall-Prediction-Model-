@@ -7,7 +7,7 @@ if PROJECT_ROOT not in sys.path:
 
 import uvicorn
 
-from backend.app import app  # noqa: F401
+from backend.app import app 
 
 if __name__ == "__main__":
     uvicorn.run(

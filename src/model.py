@@ -10,31 +10,11 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Resolve project root (one level up from src/)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class PhysicsConstraints:
-    """
-    Handles physics-based constraints and sanity checks for the Rainfall Model.
-    Ref: Physics-Based Rules for Rainfall Prediction (Indian Context)
-    """
-    
     @staticmethod
     def apply_hard_clamps(df, is_processed=False):
-        """
-        Apply hard physical clamps to the dataframe.
-        Used for both training (data cleaning) and inference (post-processing).
-        
-        Args:
-            df (pd.DataFrame): Dataframe with features (hem, olr, uth, etc.) and 'rain_mm' (if training/cleaning).
-            is_processed (bool): If True, assumes input is processed features ready for inference. 
-                                 If False, assumes raw data during cleaning.
-        """
-        # We need specific columns. If they are missing, we skip those rules or warn.
-        # Required: olr, uth, wind_speed, lst_k, cer, cot
-        # Optional: rain_mm, date/month (for seasonal rules), lat/lon (for spatial rules)
-        
-        # Working with a copy to avoid SettingWithCopy warnings on slices if any
         df = df.copy()
         
         # --- 1. Warm Rain Fix (OLR) ---
@@ -61,10 +41,6 @@ class PhysicsConstraints:
 
     @staticmethod
     def get_regime(row):
-        """
-        Determine the meteorological regime based on OLR, UTH, etc.
-        Returns: Str (Regime Name)
-        """
         olr = row.get('olr', 300)
         
         if olr > 260:
@@ -84,18 +60,6 @@ class PhysicsConstraints:
 
     @staticmethod
     def apply_post_inference_adjustments(prediction, features):
-        """
-        Apply sanity checks and adjustments to a single prediction result.
-        
-        Args:
-            prediction (float): The raw predicted rainfall (mm).
-            features (dict): The input features used for prediction. 
-                             Must include: lat, lon, month, olr, uth, etc.
-        
-        Returns:
-            float: Adjusted rainfall prediction.
-            str: Status/Reason for adjustment (optional)
-        """
         final_rain = prediction
         reason = "Model Raw"
         

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
+import DatePicker from './DatePicker';
 import type { Location } from '../types';
 
 interface Props {
@@ -54,11 +55,6 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
     onSelectLocation(loc);
     setLocationQuery(loc.place);
     setShowDropdown(false);
-  };
-
-  const formatDateDisplay = (isoDate: string) => {
-    const d = new Date(isoDate + 'T00:00:00');
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
   };
 
   return (
@@ -125,22 +121,7 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
         </div>
 
         {/* Date Input */}
-        <div className="relative">
-          <label className="block text-gray-500 text-xs font-bold mb-2 uppercase tracking-widest">Date</label>
-          <div className="flex items-center border-b-2 border-gray-900 pb-2">
-            <Calendar className="w-5 h-5 mr-3 text-gray-700" strokeWidth={1.5} />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-transparent text-gray-900 font-bold focus:outline-none text-lg"
-              id="date-input"
-            />
-          </div>
-          <div className="mt-2 text-[10px] text-gray-500 font-mono">
-            Display: {formatDateDisplay(date)}
-          </div>
-        </div>
+        <DatePicker value={date} onChange={setDate} id="date-input" />
 
         <button
           onClick={() => onPredict(date)}
