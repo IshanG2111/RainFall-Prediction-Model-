@@ -152,10 +152,10 @@ Five supervised learning algorithms were trained on the same 11-feature input ve
 For the binary Rain/No Rain classification sub-task, Logistic Regression estimates class probability:
 
 ```
-P(Y=1|X) = 1 / (1 + e^(-βX))
+P(Y=1|X) = 1 / (1 + e^(-(β₀ + β₁X₁ + β₂X₂ + … + βₙXₙ)))
 ```
 
-where β represents learned coefficients. Classification uses a 0.5 probability threshold. While interpretable and fast-converging, Logistic Regression assumes linear separability and is poorly suited to the non-linear rain/no-rain boundary.
+where β₀ is the intercept and β₁…βₙ are learned coefficients. Classification uses a 0.5 probability threshold. While interpretable and fast-converging, Logistic Regression assumes linear separability and is poorly suited to the non-linear rain/no-rain boundary.
 
 ### 5.2 Decision Tree
 
