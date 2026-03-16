@@ -10,6 +10,7 @@ from backend.routes.forecast import router as forecast_router
 from backend.routes.health import router as health_router
 from backend.core.config import settings
 from backend.core.rate_limiter import limiter
+from backend.core.dependencies import initialize_resources
 
 # Logging Configuration
 logging.basicConfig(
