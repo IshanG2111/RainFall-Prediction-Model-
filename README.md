@@ -279,6 +279,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | 🧑‍💻 | **Satya** |
 | 🧑‍💻 | **Saptarshi** |
 | 🧑‍💻 | **Shashwat** |
+| 🧑‍💻 | **Shreyansh** |
+| 🧑‍💻 | **Mayank** |
 
 </div>
 
