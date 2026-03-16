@@ -13,14 +13,18 @@ export default function App() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = useCallback(async (query: string) => {
+    setIsSearchingLocation(true);
     try {
       const results = await searchLocations(query);
       setLocations(results);
     } catch {
       setLocations([]);
+    } finally {
+      setIsSearchingLocation(false);
     }
   }, []);
 
@@ -70,6 +74,7 @@ export default function App() {
               locations={locations}
               selectedLocation={selectedLocation}
               isLoading={isLoading}
+              isSearchingLocation={isSearchingLocation}
             />
           </div>
           <div className="md:col-span-7 lg:col-span-8">
@@ -77,16 +82,16 @@ export default function App() {
           </div>
 
           {/* Middle Row */}
-          <div className="md:col-span-12">
-            <PrecipitationTrend forecast={forecast} />
-          </div>
-
-          {/* Bottom Row */}
           <div className="md:col-span-12 lg:col-span-7">
             <SevenDayForecast forecast={forecast} />
           </div>
           <div className="md:col-span-12 lg:col-span-5">
             <LocationMap coordinates={forecast?.coordinates ?? null} locationName={forecast?.location ?? null} />
+          </div>
+
+          {/* Bottom Row */}
+          <div className="md:col-span-12">
+            <PrecipitationTrend forecast={forecast} />
           </div>
         </div>
 
