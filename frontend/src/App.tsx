@@ -82,16 +82,16 @@ export default function App() {
           </div>
 
           {/* Middle Row */}
-          <div className="md:col-span-12">
-            <PrecipitationTrend forecast={forecast} />
-          </div>
-
-          {/* Bottom Row */}
           <div className="md:col-span-12 lg:col-span-7">
             <SevenDayForecast forecast={forecast} />
           </div>
           <div className="md:col-span-12 lg:col-span-5">
-            <LocationMap coordinates={forecast?.coordinates ?? null} locationName={forecast?.location ?? null} />
+            <LocationMap coordinates={forecast?.coordinates ?? null} locationName={forecast?.location ?? null} forecast={forecast} />
+          </div>
+
+          {/* Bottom Row */}
+          <div className="md:col-span-12">
+            <PrecipitationTrend forecast={forecast} />
           </div>
         </div>
 
