@@ -273,6 +273,8 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 | 🧑‍💻 | **Satya** |
 | 🧑‍💻 | **Saptarshi** |
 | 🧑‍💻 | **Shashwat** |
+| 🧑‍💻 | **Shreyansh** |
+| 🧑‍💻 | **Mayank** |
 
 </div>
 
