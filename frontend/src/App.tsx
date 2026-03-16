@@ -86,7 +86,7 @@ export default function App() {
             <SevenDayForecast forecast={forecast} />
           </div>
           <div className="md:col-span-12 lg:col-span-5">
-            <LocationMap coordinates={forecast?.coordinates ?? null} locationName={forecast?.location ?? null} forecast={forecast} />
+            <LocationMap coordinates={forecast?.coordinates ?? null} locationName={forecast?.location ?? null} />
           </div>
 
           {/* Bottom Row */}
