@@ -10,11 +10,31 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+# Resolve project root (one level up from src/)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class PhysicsConstraints:
+    """
+    Handles physics-based constraints and sanity checks for the Rainfall Model.
+    Ref: Physics-Based Rules for Rainfall Prediction (Indian Context)
+    """
+    
     @staticmethod
     def apply_hard_clamps(df, is_processed=False):
+        """
+        Apply hard physical clamps to the dataframe.
+        Used for both training (data cleaning) and inference (post-processing).
+        
+        Args:
+            df (pd.DataFrame): Dataframe with features (hem, olr, uth, etc.) and 'rain_mm' (if training/cleaning).
+            is_processed (bool): If True, assumes input is processed features ready for inference. 
+                                 If False, assumes raw data during cleaning.
+        """
+        # We need specific columns. If they are missing, we skip those rules or warn.
+        # Required: olr, uth, wind_speed, lst_k, cer, cot
+        # Optional: rain_mm, date/month (for seasonal rules), lat/lon (for spatial rules)
+        
+        # Working with a copy to avoid SettingWithCopy warnings on slices if any
         df = df.copy()
         
         # --- 1. Warm Rain Fix (OLR) ---
@@ -41,6 +61,10 @@ class PhysicsConstraints:
 
     @staticmethod
     def get_regime(row):
+        """
+        Determine the meteorological regime based on OLR, UTH, etc.
+        Returns: Str (Regime Name)
+        """
         olr = row.get('olr', 300)
         
         if olr > 260:
@@ -60,6 +84,18 @@ class PhysicsConstraints:
 
     @staticmethod
     def apply_post_inference_adjustments(prediction, features):
+        """
+        Apply sanity checks and adjustments to a single prediction result.
+        
+        Args:
+            prediction (float): The raw predicted rainfall (mm).
+            features (dict): The input features used for prediction. 
+                             Must include: lat, lon, month, olr, uth, etc.
+        
+        Returns:
+            float: Adjusted rainfall prediction.
+            str: Status/Reason for adjustment (optional)
+        """
         final_rain = prediction
         reason = "Model Raw"
         
@@ -184,14 +220,9 @@ class RainfallPredictor:
         self.df['week_sin'] = np.sin(2 * np.pi * self.df['week_of_year'] / 53)
         self.df['week_cos'] = np.cos(2 * np.pi * self.df['week_of_year'] / 53)
 
-        # --- New Meteorological Interaction Features ---
-        self.df['olr_uth_interaction'] = (300 - self.df['olr']) * self.df['uth']
-        self.df['temp_moisture'] = self.df['lst_k'] * (self.df['uth'] / 100)
-
         # Define final feature set
         self.feature_columns = self.raw_features + [
-            'day_sin', 'day_cos', 'week_sin', 'week_cos',
-            'olr_uth_interaction', 'temp_moisture'
+            'day_sin', 'day_cos', 'week_sin', 'week_cos'
         ]
         
         # Check for missing columns and fill with NaN if necessary (though model handles it)
@@ -224,7 +255,6 @@ class RainfallPredictor:
         for fold, (train_index, test_index) in enumerate(tscv.split(X)):
             X_train, X_test = X.iloc[train_index], X.iloc[test_index]
             y_train_log, y_test_log = y_log.iloc[train_index], y_log.iloc[test_index]
-            y_train_original = y.iloc[train_index]
             y_test_original = y.iloc[test_index]
             
             # Scale features
@@ -232,15 +262,22 @@ class RainfallPredictor:
             X_train_scaled = scaler.fit_transform(X_train)
             X_test_scaled = scaler.transform(X_test)
             
-            # --- Sample Weights for Zero-Inflation ---
-            sample_weights = np.where(y_train_original > 0, 5.0, 1.0)
+            # Train Main Model (Mean/Least Squares for now, or Quantile-50?)
+            # Let's use Poisson loss because rainfall count-like but continuous, good for zero-inflated.
+            # OR Squared Error. Let's stick to Squared Error for the "Main" prediction to maximize R2.
+            # But for uncertainty we need Quantile.
+            
+            # For "Honest" prediction, we want the Median (Quantile 0.5) to be robust to outliers,
+            # but usually Mean (Least Squares) minimizes RMSE.
+            # Let's train the "Best" model for RMSE using Squared Error, 
+            # and Auxiliary models for Uncertainty (Quantile 0.1, 0.9).
             
             # --- Main Model (RMSE Focus) ---
             model_main = HistGradientBoostingRegressor(
                 loss='squared_error', max_iter=200, learning_rate=0.05, 
                 max_depth=10, early_stopping=True, random_state=42
             )
-            model_main.fit(X_train_scaled, y_train_log, sample_weight=sample_weights)
+            model_main.fit(X_train_scaled, y_train_log)
             
             # Predict
             pred_log = model_main.predict(X_test_scaled)
@@ -264,30 +301,12 @@ class RainfallPredictor:
         print("\nRetraining final models on full dataset...")
         X_scaled = self.scaler.fit_transform(X) # Re-fit scaler on full data
         
-        # Sample weights for full data
-        full_sample_weights = np.where(y > 0, 5.0, 1.0)
-        
-        from sklearn.model_selection import RandomizedSearchCV
-        
-        # 1. Main Prediction Model (Targeting Accuracy) with Tuning
-        print("  Tuning Hyperparameters for Main Model...")
-        param_dist = {
-            'learning_rate': [0.01, 0.05, 0.1, 0.2],
-            'max_depth': [5, 10, 15, None],
-            'l2_regularization': [0.0, 0.1, 0.5, 1.0],
-            'max_iter': [100, 200, 300]
-        }
-        
-        base_model = HistGradientBoostingRegressor(
-            loss='squared_error', early_stopping=True, random_state=42
+        # 1. Main Prediction Model (Targeting Accuracy)
+        self.models['main'] = HistGradientBoostingRegressor(
+            loss='squared_error', max_iter=300, learning_rate=0.05, 
+            max_depth=10, early_stopping=True, random_state=42
         )
-        
-        search = RandomizedSearchCV(base_model, param_distributions=param_dist, 
-                                    n_iter=10, cv=3, scoring='neg_mean_squared_error', random_state=42, n_jobs=-1)
-        search.fit(X_scaled, y_log, sample_weight=full_sample_weights)
-        
-        self.models['main'] = search.best_estimator_
-        print(f"  Best Parameters: {search.best_params_}")
+        self.models['main'].fit(X_scaled, y_log)
         
         # 2. Uncertainty Models (Quantile Regression)
         # Quantile loss requires 'quantile' metric and 'quantile' param

@@ -1,4 +1,4 @@
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { ForecastResponse } from '../types';
 
 interface Props {
@@ -14,19 +14,6 @@ const defaultData = [
   { name: 'Day 6', rainfall: 0 },
   { name: 'Day 7', rainfall: 0 },
 ];
-
-const getTopColor = (r: number) => {
-  if (r <= 2) return '#e0f2fe'; // very light blue
-  if (r <= 5) return '#bae6fd';
-  if (r <= 10) return '#7dd3fc';
-  if (r <= 20) return '#38bdf8';
-  if (r <= 35) return '#0ea5e9';
-  if (r <= 50) return '#2563eb'; // royal blue
-  if (r <= 75) return '#1d4ed8'; // deep blue
-  if (r <= 100) return '#ef4444'; // red
-  if (r <= 150) return '#dc2626'; // strong red
-  return '#991b1b'; // dark red
-};
 
 export default function PrecipitationTrend({ forecast }: Props) {
   const data = forecast
@@ -47,14 +34,6 @@ export default function PrecipitationTrend({ forecast }: Props) {
       <div className="h-[350px] w-full mt-8">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-            <defs>
-              {data.map((entry, index) => (
-                <linearGradient key={`grad-${index}`} id={`colorRain-${index}`} x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor="#e0f2fe" stopOpacity={1} />
-                  <stop offset="100%" stopColor={getTopColor(entry.rainfall)} stopOpacity={1} />
-                </linearGradient>
-              ))}
-            </defs>
             <CartesianGrid strokeDasharray="4 4" stroke="#d1d5db" vertical={false} />
             <XAxis
               dataKey="name"
@@ -88,13 +67,10 @@ export default function PrecipitationTrend({ forecast }: Props) {
             <Bar
               dataKey="rainfall"
               name="Rainfall (mm)"
+              fill="#111827"
               barSize={40}
               radius={[4, 4, 0, 0]}
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={`url(#colorRain-${index})`} />
-              ))}
-            </Bar>
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

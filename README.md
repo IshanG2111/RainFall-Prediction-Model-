@@ -263,12 +263,6 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👥 Team
 
 <div align="center">
@@ -279,8 +273,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | 🧑‍💻 | **Satya** |
 | 🧑‍💻 | **Saptarshi** |
 | 🧑‍💻 | **Shashwat** |
-| 🧑‍💻 | **Shreyansh** |
-| 🧑‍💻 | **Mayank** |
 
 </div>
 
