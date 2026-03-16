@@ -200,14 +200,14 @@ This runs cross-validated training and saves the fitted model and scaler to `mod
 ```bash
 python src/app.py
 # or directly via uvicorn (recommended):
-uvicorn backend.app:app --host 0.0.0.0 --port 5000 --reload
+uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 | Endpoint | URL |
 |----------|-----|
-| **Web App** | `http://localhost:5000/` |
-| **Interactive API Docs** | `http://localhost:5000/docs` |
-| **OpenAPI JSON** | `http://localhost:5000/openapi.json` |
+| **Web App** | `http://localhost:8000/` |
+| **Interactive API Docs** | `http://localhost:8000/docs` |
+| **OpenAPI JSON** | `http://localhost:8000/openapi.json` |
 
 ---
 
