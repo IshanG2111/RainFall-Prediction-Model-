@@ -30,7 +30,7 @@
 
 <br/>
 
-![UI Screenshot](screenshot.png)
+![UI Screenshot](docs/screenshot.png)
 
 ---
 
@@ -48,7 +48,7 @@ Most rainfall models are "black boxes" — they look accurate on training data b
 
 ---
 
-## � Recent Improvements
+## 🔄 Recent Improvements
 
 - **Consistent Predictions**: Resolved issues with random feature generation by implementing a deterministic random seed based on location and date. This ensures consistent weather feature simulation across reloads without losing variance.
 - **Enhanced Accuracy**: Added new meteorological interaction features (`olr_uth_interaction`, `temp_moisture`) and implemented Sample Weights to handle class imbalance (zero-inflation bias), significantly improving heavy rainfall predictions.
@@ -56,7 +56,7 @@ Most rainfall models are "black boxes" — they look accurate on training data b
 
 ---
 
-## �📊 Model Performance
+## 📊 Model Performance
 
 Benchmarked on ~120,000 records using a proper Time-Series Split:
 
@@ -98,7 +98,8 @@ RainFall-Prediction-Model--IG/
 ├── frontend/               # React + Vite frontend application
 │   ├── src/                # React components, pages, and hooks
 │   ├── package.json        # Frontend dependencies
-│   └── vite.config.ts      # Vite configuration
+│   ├── vite.config.ts      # Vite configuration
+│   └── README.md           # Frontend-specific documentation
 │
 ├── backend/                # FastAPI v2.0 application (modular architecture)
 │   ├── app.py              # App factory (create_app, lifespan, CORS, rate-limiting, router registration)
@@ -138,7 +139,8 @@ RainFall-Prediction-Model--IG/
 │   ├── feature_engineering.md
 │   ├── features.md
 │   ├── model_architecture.md
-│   └── physics.md
+│   ├── physics.md
+│   └── research_paper.md
 │
 ├── .env                    # Environment variables (not committed)
 ├── requirements.txt        # Python dependencies
@@ -233,6 +235,8 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 | [`docs/feature_engineering.md`](docs/feature_engineering.md)   | Feature construction and selection rationale        |
 | [`docs/features.md`](docs/features.md)                         | Satellite feature reference                         |
 | [`docs/physics.md`](docs/physics.md)                           | Physical constraints and meteorological background  |
+| [`docs/research_paper.md`](docs/research_paper.md)             | Full research paper with methodology and results    |
+| [`CHANGELOG`](changes.md)                                      | Recent changes and improvements log                 |
 
 ---
 

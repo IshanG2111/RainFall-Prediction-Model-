@@ -1,20 +1,101 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+
+# Frontend — Rainfall AI
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6-B73BFE?style=flat-square&logo=vite&logoColor=FFD62E)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+
 </div>
 
-# Run and deploy your AI Studio app
+> Interactive React dashboard for the Rainfall AI 7-day forecast system.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/356a02dd-16b8-41e4-8e03-ea2d9fdb34ce
+## Tech Stack
 
-## Run Locally
+| Technology | Purpose |
+|------------|---------|
+| **React 19** | Component-based UI framework |
+| **Vite 6** | Fast build tool and HMR dev server |
+| **Tailwind CSS 4** | Utility-first styling |
+| **TypeScript** | Type-safe component development |
+| **Recharts** | Precipitation trend charts |
+| **Leaflet + React-Leaflet** | Interactive location map |
+| **Lucide React** | Icon system |
 
-**Prerequisites:**  Node.js
+---
 
+## Quick Start
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+**Prerequisites:** Node.js 18+
+
+```bash
+# Navigate to the frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+The dev server runs at **`http://localhost:5173`** with hot module replacement.
+
+### Production Build
+
+```bash
+npm run build
+```
+
+Output is written to `frontend/dist/` and is served by the FastAPI backend in production.
+
+---
+
+## Proxy Configuration
+
+The Vite dev server proxies all `/api` requests to the FastAPI backend:
+
+```typescript
+// vite.config.ts
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://127.0.0.1:5000',
+      changeOrigin: true
+    }
+  }
+}
+```
+
+> **Important:** The FastAPI backend must be running on port `5000` for API calls to work during development.
+
+---
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── App.tsx                # Root component — state management and layout
+│   ├── api.ts                 # API client (searchLocations, getForecast)
+│   ├── types.ts               # TypeScript interfaces (Location, ForecastResponse)
+│   └── components/
+│       ├── Header.tsx          # Application header / branding
+│       ├── PredictionForm.tsx  # Location search + date picker + predict button
+│       ├── TomorrowOutlook.tsx # Tomorrow's forecast highlight card
+│       ├── SevenDayForecast.tsx # 7-day forecast card grid
+│       ├── PrecipitationTrend.tsx # Recharts rainfall trend chart
+│       ├── LocationMap.tsx     # Leaflet map with location marker
+│       └── WeatherSidebar.tsx  # Weather details sidebar
+├── index.html                 # HTML entry point
+├── package.json               # Dependencies and scripts
+├── tsconfig.json              # TypeScript configuration
+└── vite.config.ts             # Vite + proxy configuration
+```
+
+---
+
+> For detailed architecture documentation, see [`docs/frontend.md`](../docs/frontend.md).
