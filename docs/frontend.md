@@ -1,6 +1,6 @@
-# Frontend Architecture — Rainfall AI
+# Frontend Architecture — वृष्टि AI
 
-> Complete reference for the React + Vite frontend application that powers the Rainfall AI dashboard.
+> Complete reference for the React + Vite frontend application that powers the वृष्टि AI dashboard.
 
 ---
 
@@ -43,8 +43,9 @@ frontend/
 │       ├── PredictionForm.tsx     # Location autocomplete + date picker + predict button
 │       ├── TomorrowOutlook.tsx    # Highlighted forecast card for Day 1
 │       ├── SevenDayForecast.tsx   # 7-day forecast grid (cards)
+│       ├── SeverityBadge.tsx      # Reusable sketch-animated rainfall badge
 │       ├── PrecipitationTrend.tsx # Recharts bar/line chart for rainfall trends
-│       ├── LocationMap.tsx        # Leaflet map with dynamic marker
+│       ├── LocationMap.tsx        # Dynamic Leaflet radar map with Sketch Theme
 │       ├── WeatherSidebar.tsx     # Detailed weather sidebar panel
 │       ├── TopNav.tsx             # Top navigation bar
 │       ├── LeftSidebar.tsx        # Left category navigation
@@ -81,12 +82,17 @@ The top-level component manages all application state and orchestrates data flow
 - **Predict button** with loading spinner animation and cursor state changes.
 
 ### `TomorrowOutlook.tsx`
-- Displays the first day of the forecast with a large rainfall value and status badge.
+- Displays the first day of the forecast with a large rainfall value.
+- Utilises the `SeverityBadge` component for dynamic, colour-coded storm statuses.
 - Supports loading state skeleton.
 
 ### `SevenDayForecast.tsx`
-- Renders all 7 forecast days as interactive cards.
-- Colour-coded by rainfall category (No Rain, Light, Moderate, Heavy).
+- Renders all 7 forecast days as interactive sketch cards.
+- Integrates the `SeverityBadge` component to uniformly colour-code and animate rainfall intensity across the week.
+
+### `SeverityBadge.tsx`
+- A dedicated UI component bridging React and CSS variables for an authentic **Ink-Pop Sketch Animation**.
+- Assigns distinct marker colours (`sky-200`, `red-300`, etc.) and CSS `@keyframes` speeds based on the rainfall string text.
 
 ### `PrecipitationTrend.tsx`
 - Recharts bar chart showing daily rainfall trends.

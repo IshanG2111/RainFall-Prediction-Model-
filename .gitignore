@@ -13,3 +13,6 @@ data_processed/*.csv
 .env
 .vscode/
 .idea
+
+docs/project_report.pdf
+docs/project_ppt_outline.md

@@ -1,19 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
 @theme {
     --font-sans: "Space Mono", ui-monospace, monospace;
-    --font-hand: "Kalam", cursive;
+    --font-hand: "Patrick Hand", "Architects Daughter", "Caveat", "Kalam", cursive;
 }
 
 body {
     background-color: #f4f4f0;
     color: #111827;
-    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
-    background-size: 24px 24px;
     font-family: var(--font-sans);
     overflow-x: hidden;
+    /* Base faint grid */
+    background-image: radial-gradient(#e5e7eb 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+
+/* Interactive reactive grid overlay */
+.interactive-grid-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: -1;
+    /* Darker Sketch Theme grid */
+    background-image: radial-gradient(#111827 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+    /* Reveal only around mouse pointer */
+    mask-image: radial-gradient(circle 350px at var(--mouse-x, 50vw) var(--mouse-y, 50vh), black 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle 350px at var(--mouse-x, 50vw) var(--mouse-y, 50vh), black 0%, transparent 100%);
+    opacity: 0.35;
 }
 
 .sketch-border {
@@ -40,21 +56,37 @@ body {
     font-family: inherit;
 }
 
-/* Apply a grayscale filter to the map tiles */
+
 .leaflet-tile-pane {
-    filter: grayscale(100%) contrast(1.2) opacity(0.8);
+    filter:sepia(-9%) hue-rotate(185deg) saturate(200%) contrast(1.1) brightness(0.95);
+}
+
+.leaflet-bar {
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .leaflet-control-zoom a {
     background-color: #fcfcfc !important;
     color: #111827 !important;
     border: 2px solid #111827 !important;
-    border-radius: 0 !important;
+    border-radius: 4px !important;
+    box-shadow: 3px 3px 0px 0px #111827 !important;
+    font-family: var(--font-sans);
     font-weight: bold;
+    margin-bottom: 6px !important;
+    transition: all 0.2s ease !important;
 }
 
 .leaflet-control-zoom a:hover {
-    background-color: #e5e7eb !important;
+    transform: translate(1px, 1px) !important;
+    box-shadow: 2px 2px 0px 0px #111827 !important;
+    background-color: #f4f4f0 !important;
+}
+
+.leaflet-control-zoom a:active {
+    transform: translate(3px, 3px) !important;
+    box-shadow: 0px 0px 0px 0px #111827 !important;
 }
 
 .leaflet-control-attribution {
@@ -210,4 +242,34 @@ body {
     color: #6b7280;
     font-weight: 600;
     line-height: 1.2;
+}
+
+/* Authentic Sketch Badge Ink Pop Animations */
+@keyframes sketch-pop-slow {
+    0%, 100% { box-shadow: 1px 1px 0px 0px #111827; transform: translate(0px, 0px) rotate(-0.5deg); }
+    50% { box-shadow: 3px 3px 0px 0px #111827; transform: translate(-2px, -2px) rotate(0.5deg); }
+}
+
+@keyframes sketch-pop-med {
+    0%, 100% { box-shadow: 2px 2px 0px 0px #111827; transform: translate(0px, 0px) rotate(-1deg); }
+    50% { box-shadow: 5px 5px 0px 0px #111827; transform: translate(-3px, -3px) rotate(1deg); }
+}
+
+@keyframes sketch-pop-fast {
+    0%, 100% { box-shadow: 2px 2px 0px 0px #111827; transform: translate(0px, 0px) rotate(-2deg); }
+    50% { box-shadow: 6px 6px 0px 0px #111827; transform: translate(-4px, -4px) rotate(2deg); }
+}
+
+@keyframes sketch-pop-frantic {
+    0%, 100% { box-shadow: 2px 2px 0px 0px #111827; transform: translate(0px, 0px) rotate(-4deg); }
+    50% { box-shadow: 8px 8px 0px 0px #111827; transform: translate(-6px, -6px) rotate(4deg); }
+}
+
+/* Beautiful Elegant Font Combinations for Title */
+.font-title-cormorant {
+    font-family: 'Cormorant', 'Tiro Devanagari Hindi', serif;
+}
+
+.font-title-playfair {
+    font-family: 'Playfair Display', 'Noto Serif Devanagari', serif;
 }

@@ -1,5 +1,6 @@
 import { CloudDrizzle, CloudRain, Cloud, Sun, Loader2 } from 'lucide-react';
 import type { ForecastResponse } from '../types';
+import SeverityBadge from './SeverityBadge';
 
 interface Props {
   forecast: ForecastResponse | null;
@@ -56,9 +57,7 @@ export default function TomorrowOutlook({ forecast, isLoading }: Props) {
             </span>
             <span className="text-xl font-bold">mm</span>
           </div>
-          <div className="text-xs font-bold mt-2 bg-gray-900 text-white px-3 py-1 uppercase tracking-widest">
-            {tomorrow?.status ?? 'No Data'}
-          </div>
+          <SeverityBadge status={tomorrow?.status ?? 'No Data'} className="mt-2" />
         </div>
 
         {/* Right: Detailed Stats */}

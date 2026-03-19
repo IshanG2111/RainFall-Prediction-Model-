@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import PredictionForm from './components/PredictionForm';
 import TomorrowOutlook from './components/TomorrowOutlook';
@@ -15,6 +15,17 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Track mouse for interactive reactive grid background
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleSearch = useCallback(async (query: string) => {
     setIsSearchingLocation(true);
@@ -54,8 +65,9 @@ export default function App() {
   }, [selectedLocation]);
 
   return (
-    <div className="min-h-screen p-4 md:p-8 lg:p-12">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen p-4 md:p-8 lg:p-12 relative z-0">
+      <div className="interactive-grid-overlay"></div>
+      <div className="max-w-7xl mx-auto relative z-10">
         <Header />
 
         {error && (
@@ -96,7 +108,7 @@ export default function App() {
         </div>
 
         <div className="mt-16 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
-          // Powered by Rainfall AI //
+          // SMART PRECIPITATION FORECASTING
         </div>
       </div>
     </div>

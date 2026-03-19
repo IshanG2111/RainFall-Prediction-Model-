@@ -1,6 +1,6 @@
 <div align="center">
 
-# Frontend — Rainfall AI
+# Frontend — वृष्टि AI
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-6-B73BFE?style=flat-square&logo=vite&logoColor=FFD62E)
@@ -9,7 +9,7 @@
 
 </div>
 
-> Interactive React dashboard for the Rainfall AI 7-day forecast system.
+> Interactive React dashboard for the वृष्टि AI 7-day forecast system.
 
 ---
 
@@ -87,8 +87,9 @@ frontend/
 │       ├── PredictionForm.tsx  # Location search + date picker + predict button
 │       ├── TomorrowOutlook.tsx # Tomorrow's forecast highlight card
 │       ├── SevenDayForecast.tsx # 7-day forecast card grid
+│       ├── SeverityBadge.tsx   # Dynamic animated sketch severity tags
 │       ├── PrecipitationTrend.tsx # Recharts rainfall trend chart
-│       ├── LocationMap.tsx     # Leaflet map with location marker
+│       ├── LocationMap.tsx     # Leaflet map with location radar and CSS filters
 │       └── WeatherSidebar.tsx  # Weather details sidebar
 ├── index.html                 # HTML entry point
 ├── package.json               # Dependencies and scripts
