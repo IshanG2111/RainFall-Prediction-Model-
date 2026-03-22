@@ -31,9 +31,10 @@ def load_grid():
     return pd.read_parquet(GRID_PATH)
 
 def load_india_map():
-    shapefile_path = PROJECT_ROOT / "maps" / "ne_110m_admin_0_countries.shp"
-    world = gpd.read_file(shapefile_path)
-    india = world[world["ADMIN"] == "India"]
+    shapefile_path = PROJECT_ROOT / "maps" / "india_ds.shp"
+    india = gpd.read_file(shapefile_path)
+    if india.crs is None:
+        india.set_crs(epsg=4326, inplace=True)
     return india
 
 def plot_missing_values():
@@ -60,8 +61,9 @@ def plot_grid():
     geometry = [Point(xy) for xy in zip(grid_df["lon_center"], grid_df["lat_center"])]
     gdf = gpd.GeoDataFrame(grid_df, geometry=geometry, crs="EPSG:4326")
     gdf = gpd.clip(gdf, india)
-    plt.figure(figsize=(8, 10))
-    india.plot(color="white", edgecolor="black")
+    fig,ax=plt.subplots(figsize=(8, 10))
+    india.plot(ax=ax, color="#f5f5f5", edgecolor="none")
+    india.boundary.plot(ax=ax, color="black", linewidth=0.5)
     gdf.plot(markersize=1,color="blue",alpha=0.6,label="Grid Points")
     plt.title("Spatial Grid Mapping over India", fontsize=14)
     plt.xlabel("Longitude")
@@ -119,8 +121,9 @@ def plot_spatial_heatmap():
     geometry = [Point(xy) for xy in zip(spatial_avg["lon_center"], spatial_avg["lat_center"])]
     gdf = gpd.GeoDataFrame(spatial_avg, geometry=geometry, crs="EPSG:4326")
     gdf = gpd.clip(gdf, india)
-    plt.figure(figsize=(8, 10))
-    india.plot(color="lightgrey", edgecolor="black")
+    fig,ax =plt.subplots(figsize=(8, 10))
+    india.plot(ax=ax, color="#f5f5f5", edgecolor="none")
+    india.boundary.plot(ax=ax, color="black", linewidth=0.5)
     gdf.plot(column="rain_mm",cmap="turbo",markersize=8,legend=True,alpha=0.9)
     plt.title("Spatial Rainfall Distribution over India", fontsize=14)
     plt.xlabel("Longitude")
