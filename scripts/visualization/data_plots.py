@@ -16,7 +16,7 @@ PROCESSED_ROOT = PROJECT_ROOT / "data_processed" / "3_months"
 MASTER_DAILY_DIR = PROCESSED_ROOT / "master_daily"
 FINAL_DATASET_PATH = PROCESSED_ROOT / "final_dataset" / "final_dataset.parquet"
 GRID_PATH = PROJECT_ROOT / "grid" / "grid_definition.parquet"
-FIGURES_DIR = PROJECT_ROOT / "report" / "data_preprocessing"
+FIGURES_DIR = PROJECT_ROOT / "reports" / "data_preprocessing"
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_master_data():

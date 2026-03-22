@@ -255,7 +255,7 @@ class RainfallPredictor:
         # Recalculate predictions on the last test set using the Main model trained on data UP TO that point
         # (Actually, we saved 'last_X_test_scaled' and 'last_y_test_original')
         # We need the model trained on the 4th fold. We didn't save it, we only saved 'self.models['main']' which is trained on ALL data.
-        # Strict honesty: We should report the CV average.
+        # Strict honesty: We should reports the CV average.
         # Practicality: app.py expects a single number.
 
         self.metrics = {

@@ -7,7 +7,7 @@ NUM_REQUESTS = 50
 response_times = []
 status_codes = []
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-FIGURES_DIR = PROJECT_ROOT / "report" / "backend"
+FIGURES_DIR = PROJECT_ROOT / "reports" / "backend"
 print("Starting API Performance Test...\n")
 
 for i in range(NUM_REQUESTS):
