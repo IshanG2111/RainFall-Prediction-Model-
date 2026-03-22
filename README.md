@@ -63,9 +63,9 @@ Benchmarked on ~120,000 records using a proper Time-Series Split:
 
 | Metric | Score | Interpretation |
 |--------|-------|----------------|
-| **RMSE** | 5.10 mm | High precision |
-| **R² Score** | 0.88 | Strong predictive power |
-| **MAE** | 0.54 mm | Low average error |
+| **RMSE** | 11.71 mm | High precision |
+| **R² Score** | 0.76 | Strong predictive power |
+| **MAE** | 3.05 mm | Low average error |
 
 ---
 
