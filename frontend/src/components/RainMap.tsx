@@ -27,6 +27,7 @@ const heatPoints: [number, number, number][] = [
   [51.48, -0.11, 0.6],
   [51.50, -0.05, 0.7],
   [51.515, -0.08, 0.4],
+  [51.515, -0.08, 0.9],
 ];
 
 // Mock Route Data

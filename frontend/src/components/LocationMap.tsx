@@ -43,7 +43,7 @@ function RainHeatmapLayer({ centerLat, centerLon }: { centerLat: number; centerL
     // @ts-ignore - leaflet.heat adds heatLayer to L
     const heat = L.heatLayer([], {
       radius: 45,      // Expansive radius for smooth blending
-      blur: 40  ,        // High blur simulates atmospheric scattering
+      blur: 35  ,        // High blur simulates atmospheric scattering
       maxZoom: 13,
       minOpacity: 0.15, // Keep the edges visible
       // Professional Meteorological Radar Gradient 
@@ -131,7 +131,7 @@ export default function LocationMap({ coordinates, locationName }: Props) {
               center={center}
               radius={200}
               pathOptions={{
-                color: '#ffffff97',
+                color: '#ffffffff',
                 fillColor: '#0000007b',
                 fillOpacity: 1,
                 weight: 2
