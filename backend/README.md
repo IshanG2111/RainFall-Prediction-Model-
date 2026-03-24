@@ -114,7 +114,7 @@ echo "GEOAPIFY_API_KEY=your_key_here" > .env
 python src/model.py
 
 # 4. Start the server
-python src/app.py
+python app.py
 # — or —
 uvicorn backend.app:app --host 0.0.0.0 --port 5000 --reload
 ```
