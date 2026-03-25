@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: rainfall-backend
+    env: python
+    plan: free
+    branch: satyaaman
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
