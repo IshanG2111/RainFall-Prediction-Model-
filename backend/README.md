@@ -48,19 +48,16 @@ backend/
 
 All endpoints are versioned under `/api/v1`. Rate limiting is enforced per IP via `slowapi`.
 
-| Method | Endpoint | Rate Limit | Description |
-|--------|----------|------------|-------------|
-| `GET` | `/api/v1/health` | — | Server + model readiness check |
-| `GET` | `/api/v1/locations?q=<query>` | 15/min | Location autocomplete (≥ 3 chars) |
-| `POST` | `/api/v1/forecast` | 5/min | 7-day rainfall forecast for a location |
+| Method | Endpoint                      | Rate Limit | Description                            |
+|--------|-------------------------------|------------|----------------------------------------|
+| `GET`  | `/api/v1/health`              | —          | Server + model readiness check         |
+| `GET`  | `/api/v1/locations?q=<query>` | 15/min     | Location autocomplete (≥ 3 chars)      |
+| `POST` | `/api/v1/forecast`            | 5/min      | 7-day rainfall forecast for a location |
 
 ### `GET /api/v1/locations`
 
 Returns up to 5 matching Indian locations via Geoapify geocoding.
-
 ```json
-// GET /api/v1/locations?q=New
-
 [
   { "place": "New Delhi, India", "lat": 28.6139, "lon": 77.2090 },
   { "place": "New Town, WB, India", "lat": 22.5883, "lon": 88.4734 }
@@ -122,11 +119,11 @@ python app.py
 uvicorn backend.app:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-| Resource | URL |
-|----------|-----|
-| Web App | `http://localhost:5000/` |
-| Interactive API Docs | `http://localhost:5000/docs` |
-| OpenAPI JSON | `http://localhost:5000/openapi.json` |
+| Resource             | URL                                  |
+|----------------------|--------------------------------------|
+| Web App              | `http://localhost:5000/`             |
+| Interactive API Docs | `http://localhost:5000/docs`         |
+| OpenAPI JSON         | `http://localhost:5000/openapi.json` |
 
 ---
 
@@ -134,11 +131,11 @@ uvicorn backend.app:app --host 0.0.0.0 --port 5000 --reload
 
 Defined in `.env` at the project root. Loaded by `backend/core/config.py`.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GEOAPIFY_API_KEY` | Geoapify autocomplete API key | *(required)* |
-| `ALLOWED_ORIGINS` | Comma-separated CORS origins | `http://localhost:5173,http://localhost:3000` |
-| `REQUEST_TIMEOUT` | HTTP client timeout (seconds) | `5` |
+| Variable           | Description                   | Default                                       |
+|--------------------|-------------------------------|-----------------------------------------------|
+| `GEOAPIFY_API_KEY` | Geoapify autocomplete API key | *(required)*                                  |
+| `ALLOWED_ORIGINS`  | Comma-separated CORS origins  | `http://localhost:5173,http://localhost:3000` |
+| `REQUEST_TIMEOUT`  | HTTP client timeout (seconds) | `5`                                           |
 
 ---
 

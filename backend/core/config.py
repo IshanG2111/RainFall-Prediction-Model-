@@ -47,8 +47,8 @@ class Settings:
 
         # Model & Data Paths
         self.MODEL_PATH: Path = BASE_DIR / "models" / "model_frame_1.pkl"
-        self.GRID_PATH: Path = BASE_DIR / "data" / "grid" / "grid_definition.parquet"
-        self.MASTER_DATA_PATH: Path = (BASE_DIR/ "data"/ "finaldata"/ "3months_dataset.parquet")
+        self.GRID_PATH: Path = BASE_DIR / "grid" / "grid_definition.parquet"
+        self.MASTER_DATA_PATH: Path = (BASE_DIR/ "data_processed"/ "3_months"/ "final_dataset"/ "final_dataset.parquet")
 
 # Singleton instance
 settings = Settings()
