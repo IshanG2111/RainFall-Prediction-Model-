@@ -102,9 +102,9 @@ export default function LocationMap({ coordinates, locationName }: Props) {
 
   return (
     <div className="sketch-border p-6 h-full flex flex-col">
-      <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">
+      <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">
         {locationName ? ` ${locationName}` : 'Location Map'}
-      </h3>
+      </h2>
 
       <div className="flex-1 border-2 border-gray-900 relative min-h-[350px] bg-white p-2">
         <div className="w-full h-full relative border-2 border-gray-900">

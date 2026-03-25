@@ -5,6 +5,11 @@ from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+import sys
+import os
+
+# Add project root to sys.path so 'backend' modules can be imported
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend.routes.locations import router as location_router
 from backend.routes.forecast import router as forecast_router
 from backend.routes.health import router as health_router
@@ -72,3 +77,7 @@ def create_app() -> FastAPI:
     return app
 
 app = create_app()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("backend.app:app", host="0.0.0.0", port=5000, reload=True)

@@ -37,9 +37,9 @@ export default function TomorrowOutlook({ forecast, isLoading }: Props) {
 
   return (
     <div className="sketch-border p-6 h-full flex flex-col">
-      <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">
+      <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">
         {tomorrow ? "Tomorrow's Outlook" : "Forecast Preview"}
-      </h3>
+      </h2>
 
       <div className="flex-1 flex flex-col md:flex-row items-center gap-8 lg:gap-12 p-4">
 

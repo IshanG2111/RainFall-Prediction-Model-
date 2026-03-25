@@ -8,7 +8,7 @@ Ishan Ghosh, Satya Aman, Saptarshi Roy, Shashwat Narayan
 
 ¹ Department of Computer Science and Engineering
 School of Engineering and Technology
-[University Name — KIIT, India
+KIIT University, Bhubaneswar, India
 
 Correspondence: {ishan, satya, saptarshi, shashwat}@kiit.ac.in
 
@@ -20,7 +20,7 @@ Correspondence: {ishan, satya, saptarshi, shashwat}@kiit.ac.in
 
 ## Abstract
 
-Accurate rainfall prediction is critical for agricultural planning, flood management, and disaster preparedness, particularly in monsoon-driven economies such as India. Traditional numerical weather prediction (NWP) methods are computationally expensive and struggle to capture local-scale precipitation variability. This paper presents a machine learning–based rainfall prediction system trained on INSAT-3DR satellite-derived atmospheric features including Outgoing Longwave Radiation (OLR), Upper Tropospheric Humidity (UTH), Land Surface Temperature (LST), Hydro-Estimator Method (HEM) rainfall estimates, Cloud Effective Radius (CER), Cloud Optical Thickness (COT), and Wind Speed. A Histogram-based Gradient Boosting Regressor (HistGBR) was trained and evaluated against Logistic Regression, Random Forest, Decision Tree, and Support Vector Machine baselines using a dataset of over 120,000 records spanning multiple Indian meteorological grid cells. The HistGBR model achieves an R² Score of 0.88 and a Root Mean Square Error of 5.10 mm. A FastAPI backend coupled with a React-based interactive web interface provides real-time 7-day rainfall forecasts to end users. Results demonstrate that satellite-driven gradient boosting models significantly outperform classical statistical approaches and offer a practical pathway toward operational AI-assisted weather forecasting.
+Accurate rainfall prediction is critical for agricultural planning, flood management, and disaster preparedness, particularly in monsoon-driven economies such as India. Traditional numerical weather prediction (NWP) methods are computationally expensive and struggle to capture local-scale precipitation variability. This paper presents a machine learning–based rainfall prediction system trained on INSAT-3DR satellite-derived atmospheric features including Outgoing Longwave Radiation (OLR), Upper Tropospheric Humidity (UTH), Land Surface Temperature (LST), Hydro-Estimator Method (HEM) rainfall estimates, Cloud Effective Radius (CER), Cloud Optical Thickness (COT), and Wind Speed. A Histogram-based Gradient Boosting Regressor (HistGBR) was trained and evaluated using a dataset of over 1.58 million records spanning 15,360 Indian meteorological grid cells over a 103-day monsoon period (June–October 2025). Using 5-fold Time-Series Cross-Validation, the HistGBR model achieves an average R² of 0.762, a Root Mean Square Error (RMSE) of 11.70 mm, and a Mean Absolute Error (MAE) of 3.95 mm. A FastAPI backend coupled with a React-based interactive web interface provides real-time 7-day rainfall forecasts to end users. Physics-informed post-processing constraints are applied at inference time to ensure meteorologically consistent predictions. Results demonstrate that satellite-driven gradient boosting models offer a practical pathway toward operational AI-assisted weather forecasting.
 
 **Keywords:** Rainfall Prediction; Machine Learning; Weather Forecasting; Satellite Remote Sensing; Gradient Boosting; FastAPI; Web Interface; INSAT-3DR; Climate Prediction
 
@@ -43,10 +43,11 @@ This paper is motivated by the need for a low-latency, accessible, and interpret
 The principal contributions of this work are:
 
 1. **ML-Based Rainfall Prediction Pipeline**: A complete end-to-end pipeline from INSAT-3DR satellite feature extraction to calibrated rainfall estimation in mm/day.
-2. **Comparative Model Evaluation**: Systematic benchmarking of five ML algorithms (Logistic Regression, Decision Tree, Random Forest, SVM, and HistGBR) under identical train–test conditions using time-series cross-validation.
-3. **Physics-Constrained Inference**: Post-prediction meteorological rule enforcement to eliminate physically impossible outputs (e.g., predicting rain under clear-sky conditions).
-4. **Web-Based Forecast Interface**: A React + FastAPI system enabling non-expert users to obtain 7-day location-specific rainfall forecasts through a simple UI.
-5. **Uncertainty Quantification**: Quantile regression to provide both a median and 95th-percentile (extreme event) rainfall estimate.
+2. **Large-Scale Training**: Model trained on over 1.58 million records across 15,360 grid cells, demonstrating scalability to high-resolution spatial coverage.
+3. **Honest Evaluation via Time-Series CV**: Systematic evaluation using 5-fold `TimeSeriesSplit` cross-validation to prevent temporal data leakage, with transparent reporting of per-fold metrics.
+4. **Physics-Constrained Inference**: Post-prediction meteorological rule enforcement to eliminate physically impossible outputs (e.g., predicting rain under clear-sky OLR > 260 W/m²).
+5. **Web-Based Forecast Interface**: A React + FastAPI system enabling non-expert users to obtain 7-day location-specific rainfall forecasts through a simple UI.
+6. **Uncertainty Quantification**: Quantile regression to provide both a median and 95th-percentile (extreme event) rainfall estimate.
 
 ---
 
@@ -73,7 +74,7 @@ Satellite-driven approaches have emerged as particularly powerful given the glob
 | Tripathi et al. [11] | SVM | IMD monsoon data / India | Accuracy = 84% |
 | Nguyen et al. [12] | PERSIANN-CCS | GOES satellite / Global | RMSE: 6.4 mm |
 | Pan et al. [13] | Gradient Boosting + MODIS | Satellite gridded / East Asia | R² = 0.86 |
-| **This work** | **HistGBR (Scikit-Learn)** | **INSAT-3DR / India** | **R² = 0.88** |
+| **This work** | **HistGBR (Scikit-Learn)** | **INSAT-3DR / India** | **R² = 0.762, RMSE = 11.70** |
 
 The present work distinguishes itself from prior studies in three respects: (i) exclusive reliance on INSAT-3DR derived satellite channels without ground-based station data, making it applicable in observation-sparse regions; (ii) physics-informed post-processing; and (iii) deployment as a public-facing interactive web application.
 
@@ -85,7 +86,7 @@ The present work distinguishes itself from prior studies in three respects: (i) 
 
 The dataset used in this study is derived from INSAT-3DR, India's geostationary meteorological satellite operated by the Indian Space Research Organisation (ISRO) and disseminated through the Space Applications Centre (SAC). INSAT-3DR provides multi-spectral imagery at 15-minute intervals over the Indian subcontinent and surrounding ocean regions at spatial resolutions between 1 km and 8 km depending on the channel.
 
-Daily composite values of satellite-derived atmospheric parameters were aggregated onto a 0.25° × 0.25° spatial grid covering the Indian landmass (6°N–36°N, 66°E–100°E). The final processed dataset contains **120,847 sample records** spanning five monsoon seasons (June–September, 2018–2022), with each record representing a unique grid cell–day combination. The target variable is the daily accumulated rainfall in millimetres (mm/day), validated against IMD gauge-adjusted gridded precipitation analysis [14].
+Daily composite values of satellite-derived atmospheric parameters were aggregated onto a 0.25° × 0.25° spatial grid covering the Indian landmass. The final processed dataset contains **1,582,080 sample records** spanning 103 days during the 2025 monsoon season (June 25 – October 5, 2025), distributed across **15,360 unique grid cells**. Each record represents a unique grid cell–day combination. The target variable is the daily accumulated rainfall in millimetres (mm/day), validated against IMD gauge-adjusted gridded precipitation analysis [14].
 
 ### 3.2 Dataset Features
 
@@ -97,32 +98,36 @@ Daily composite values of satellite-derived atmospheric parameters were aggregat
 | `OLR` | Outgoing Longwave Radiation | W/m² | Thermal emission from Earth/cloud tops; low values indicate deep convection |
 | `UTH` | Upper Tropospheric Humidity | % | Moisture content in the 200–500 hPa layer; supports deep cloud formation |
 | `LST_K` | Land Surface Temperature | K | Surface skin temperature; drives boundary-layer instability and convection |
-| `WDP` | Wind Speed | m/s | Near-surface wind speed; governs moisture advection and storm propagation |
+| `wind_speed` | Wind Speed | m/s | Near-surface wind speed; governs moisture advection and storm propagation |
 | `COT` | Cloud Optical Thickness | — | Optical depth of cloud layer; dense clouds hold more condensed water |
 | `CER` | Cloud Effective Radius | μm | Mean droplet/ice-crystal size; larger values indicate imminent precipitation |
-| `DOY` | Day of Year | — | Cyclic encoding (sin/cos) to capture monsoon seasonality |
-| `Month` | Calendar Month | — | Encoded to distinguish intra-seasonal rainfall regimes |
-| `olr_uth_interaction` | OLR × UTH Interaction | — | Engineered feature capturing coupled deep-convection signal |
-| `temp_moisture` | LST × UTH Interaction | — | Engineered feature for surface-driven moisture instability |
+| `day_sin` / `day_cos` | Cyclic Day-of-Year | — | Sine/cosine encoding of day-of-year to capture monsoon seasonality |
+| `week_sin` / `week_cos` | Cyclic Week-of-Year | — | Sine/cosine encoding of week-of-year for weekly temporal patterns |
+| `olr_uth_interaction` | OLR × UTH Interaction | — | Engineered feature: (300 − OLR) × UTH, capturing coupled deep-convection signal |
+| `temp_moisture` | LST × UTH Interaction | — | Engineered feature: LST_K × (UTH / 100), for surface-driven moisture instability |
+
+The primary model (`src/model.py`) uses 13 features (7 raw satellite + 4 cyclic temporal + 2 interaction terms).
 
 ### 3.3 Data Preprocessing
 
-**Missing Value Handling:** INSAT-3DR retrievals can be unavailable due to sun-glint, thick cirrus, or satellite geometry issues. Records missing more than two satellite channels were removed, reducing the dataset by approximately 3.2%. Remaining single-channel gaps were imputed using the spatial median of the 8-cell neighbourhood for that day.
+**Missing Value Handling:** INSAT-3DR retrievals can be unavailable due to sun-glint, thick cirrus, or satellite geometry issues. Wind speed data has the highest missingness at 74.19% of records, while HEM has 3.88% missing. The HistGradientBoostingRegressor natively handles missing values by learning the optimal split direction for NaN entries at each tree node, eliminating the need for imputation. Records were only dropped if the target variable (`rain_mm`) was missing or if both OLR and HEM were simultaneously absent.
 
-**Log Transformation of Target Variable:** The rainfall distribution is heavily right-skewed with a large zero-mass (approximately 41% of records report 0 mm). A log(1 + x) transformation was applied to the target variable before training to normalize the distribution, reduce the influence of extreme monsoon events on gradient updates, and prevent heteroscedastic residuals.
+**Log Transformation of Target Variable:** The rainfall distribution is heavily right-skewed with approximately 26.4% of records reporting 0 mm and a long tail up to 684 mm. A `log(1 + x)` transformation was applied to the target variable before training to normalize the distribution, reduce the influence of extreme monsoon events on gradient updates, and prevent heteroscedastic residuals. Inverse transformation (`expm1`) is applied post-prediction to recover rainfall in mm.
 
-**Feature Normalization:** All numerical input features were standardized using `sklearn.preprocessing.StandardScaler` (zero mean, unit variance). This ensures that gradient-based optimization is not dominated by high-magnitude features such as LST_K (values ~300 K) relative to dimensionless features such as COT (values ~1–50).
+**Feature Normalization:** All numerical input features were standardized using `sklearn.preprocessing.StandardScaler` (zero mean, unit variance). This ensures that gradient-based optimization is not dominated by high-magnitude features such as LST_K (values ~299 K) relative to dimensionless features such as COT.
 
-**Cyclic Temporal Encoding:** The Day-of-Year (DOY) and Month features were encoded using sine-cosine transformations to preserve their cyclical continuity:
+**Cyclic Temporal Encoding:** The Day-of-Year and Week-of-Year features were encoded using sine-cosine transformations to preserve their cyclical continuity:
 
 ```
-DOY_sin = sin(2π × DOY / 365)
-DOY_cos = cos(2π × DOY / 365)
+day_sin = sin(2π × day_of_year / 366)
+day_cos = cos(2π × day_of_year / 366)
+week_sin = sin(2π × week_of_year / 53)
+week_cos = cos(2π × week_of_year / 53)
 ```
 
-**Train–Test Split:** An 80:20 temporal split was applied, with the final year (2022 monsoon season) held out entirely as the test set. A 5-fold Time-Series Cross-Validation was additionally performed during hyperparameter tuning to prevent data leakage from future to past observations.
+**Sample Weighting for Zero-Inflation:** To counteract the zero-inflation bias (26.4% zero-rain records), records with `rain_mm > 0` were assigned a sample weight of 5.0, while zero-rain records received a weight of 1.0. This ensures the model does not trivially learn to predict zero rainfall.
 
-**Figure 1 (Description):** *Distribution of rainfall classes in the dataset. The bar chart shows that approximately 41% of records report No Rain (0 mm), 27% report Light Rain (0.1–2.5 mm), 21% report Moderate Rain (2.5–15 mm), and 11% report Heavy Rain (> 15 mm). This pronounced class imbalance motivated the use of sample weighting during model training.*
+**Train–Test Split:** A 5-fold `TimeSeriesSplit` cross-validation strategy was used exclusively. Each fold's training set is a contiguous temporal prefix and the test set is the immediately following temporal block of 263,680 records. This prevents data leakage from future to past observations.
 
 ---
 
@@ -134,37 +139,39 @@ The rainfall prediction system is structured as a four-layer pipeline encompassi
 
 ### 4.1 Pipeline Stages
 
-**Stage 1 — Data Collection:** Raw INSAT-3DR Level-2 products are ingested in HDF5 format. A Python-based training script (`src/model.py`) reads, re-grids, and merges multi-channel products onto the 0.25° analysis grid, and also contains the full feature engineering and model training logic.
+**Stage 1 — Data Collection:** Raw INSAT-3DR Level-2 products are ingested and processed. A modular Python pipeline under `scripts/` handles data processing, grid mapping, and feature merging. The training script (`src/model.py`) reads the processed Parquet dataset and contains the full feature engineering and model training logic.
 
-**Stage 2 — Data Preprocessing:** Missing value imputation, log transformation of the target, and StandardScaler normalization are applied. The scaler parameters are fitted exclusively on training data and serialised to `models/scaler.pkl` to prevent leakage at inference time.
+**Stage 2 — Data Preprocessing:** Missing value handling is delegated to HistGBR's native NaN support. Log transformation of the target and StandardScaler normalization are applied. The scaler is fitted exclusively on training data and serialised alongside the model to `models/model_frame_1.pkl` to prevent leakage at inference time.
 
-**Stage 3 — Feature Engineering:** Raw satellite channels are augmented with temporal encodings and two interaction terms (`olr_uth_interaction`, `temp_moisture`) derived from domain knowledge about convective triggers. Feature selection was validated using permutation importance scores from the trained Random Forest baseline.
+**Stage 3 — Feature Engineering:** Raw satellite channels (7 features) are augmented with cyclic temporal encodings (4 features: day_sin, day_cos, week_sin, week_cos) and two interaction terms (`olr_uth_interaction = (300 − OLR) × UTH`, `temp_moisture = LST_K × UTH / 100`) derived from domain knowledge about convective triggers, yielding 13 total features.
 
-**Stage 4 — ML Model Training:** The HistGBR model is trained with 5-fold Time-Series Cross-Validation and `RandomizedSearchCV` for hyperparameter tuning. The final model is serialised to `models/model.pkl`.
+**Stage 4 — ML Model Training:** The HistGBR model is trained with 5-fold `TimeSeriesSplit` cross-validation. Hyperparameter tuning is performed via `RandomizedSearchCV` (10 random configurations, 3-fold CV). The final model is retrained on the full dataset with the best hyperparameters and serialised to `models/model_frame_1.pkl` along with the scaler, feature columns, and metrics dictionary.
 
-**Stage 5 — Prediction & Post-Processing:** At inference time, input features for a given location and date are assembled, scaled, and passed to the model. Physics constraints are enforced after prediction:
-- If OLR > 280 W/m² and COT < 5 → predicted rainfall is clipped to 0 mm (clear-sky rule).
-- Predicted values below 0.1 mm are rounded to 0 mm (trace-precipitation suppression).
-- Quantile regression yields both the median (P50) and extreme estimate (P95).
+**Stage 5 — Prediction & Post-Processing:** At inference time, input features for a given grid cell and date are assembled from the master dataset with stochastic perturbation (±5%) for day-to-day variation. Features are scaled and passed to the model. Physics constraints are enforced after prediction:
+- If OLR > 260 W/m² → predicted rainfall is set to 0 mm (clear-sky rule).
+- If OLR > 200 and UTH < 40% → rainfall is capped at 5 mm (warm/dry condition).
+- If COT < 8 → rainfall is capped at 2 mm (haze filter).
+- Regional sanity filters: Rajasthan desert dampening, winter dryness clamps.
+- Quantile regression yields an extreme estimate (P95) for uncertainty quantification.
 
-**Stage 6 — Web Frontend Interface:** A React + Vite single-page application communicates with the FastAPI backend via REST. Users enter a city name, receive geocoded coordinates, and obtain a 7-day forecast displayed as an interactive rainfall chart.
+**Stage 6 — Web Frontend Interface:** A React + Vite single-page application communicates with the FastAPI backend via REST. Users enter a city name, receive geocoded coordinates via Geoapify API, and obtain a 7-day forecast displayed with interactive visualizations.
 
 **Pipeline Diagram:**
 
 ```
-Dataset (INSAT-3DR)
+Dataset (INSAT-3DR, 1.58M records, Parquet format)
        │
        ▼
-Preprocessing (Cleaning, Log Transform, StandardScaler)
+Preprocessing (Cleaning, Log Transform, StandardScaler, Sample Weighting)
        │
        ▼
-Feature Engineering (Temporal Encoding, Interaction Terms)
+Feature Engineering (7 Satellite + 4 Cyclic + 2 Interaction = 13 Features)
        │
        ▼
-ML Model Training (HistGBR + 5-Fold CV + RandomizedSearchCV)
+ML Model Training (HistGBR + 5-Fold TimeSeriesSplit + RandomizedSearchCV)
        │
        ▼
-Serialised Model + Scaler (.pkl)
+Serialised Models + Scaler (models/model_frame_1.pkl)
        │
        ▼
 FastAPI Inference Server (Physics Constraints + Quantile Estimation)
@@ -178,75 +185,57 @@ React Web Interface → User
 
 ---
 
-## 5. Machine Learning Models Used
+## 5. Machine Learning Model
 
-Five supervised learning algorithms were trained and evaluated on the processed dataset. Each model operates on the same 11-feature input vector described in Section 3.2.
+### 5.1 Histogram-based Gradient Boosting Regressor (HistGBR) — Primary Model
 
-### 5.1 Logistic Regression (Baseline Classifier)
-
-For the rainfall classification sub-task (Rain / No Rain), Logistic Regression estimates the probability that a given observation belongs to the positive (rain) class:
-
-```
-P(Y = 1 | X) = 1 / (1 + exp(−β₀ − β₁X₁ − β₂X₂ − … − βₙXₙ))
-```
-
-where β₀ is the intercept and β₁…βₙ are learned regression coefficients. Classification is performed by thresholding the estimated probability at 0.5. Despite its simplicity, Logistic Regression provides an interpretable baseline and converges quickly, making it useful for sanity-checking the feature pipeline.
-
-**Limitations:** Logistic Regression assumes linear separability and is poorly suited to the multi-modal, non-linear boundary between rain and no-rain states driven by atmospheric instability.
-
-### 5.2 Decision Tree
-
-A single Decision Tree recursively partitions the feature space by selecting the split variable and threshold that maximally reduces impurity (Gini or entropy for classification; variance for regression):
-
-```
-Gini Impurity = 1 − Σ pᵢ²
-```
-
-Decision Trees are highly interpretable and require no feature scaling. However, they are prone to overfitting when tree depth is unconstrained, leading to poor generalization on unseen weather patterns.
-
-### 5.3 Random Forest
-
-Random Forest constructs an ensemble of N decision trees, each trained on a bootstrap sample of the training data and using a random subset of √d features at each split. The final prediction is the average (regression) or majority vote (classification) across all trees:
-
-```
-ŷ_RF = (1/N) × Σᵢ hᵢ(X)
-```
-
-where hᵢ(X) is the prediction of the i-th tree. This bagging strategy reduces variance without significantly increasing bias. Random Forest also provides permutation-based feature importance scores, which were used for feature selection validation in this study.
-
-### 5.4 Support Vector Machine (SVM)
-
-For the binary rain/no-rain classification task, an SVM with a Radial Basis Function (RBF) kernel finds the maximum-margin hyperplane in a high-dimensional feature space:
-
-```
-f(x) = sign(Σᵢ αᵢ yᵢ K(xᵢ, x) + b)
-K(xᵢ, xⱼ) = exp(−γ ‖xᵢ − xⱼ‖²)
-```
-
-where αᵢ are Lagrange multipliers, yᵢ are class labels, γ is the RBF bandwidth, and b is the bias term. SVM is effective in high-dimensional spaces and is robust to outliers when properly regularized with the C parameter.
-
-### 5.5 Histogram-based Gradient Boosting Regressor (HistGBR) — Primary Model
-
-HistGBR is an optimized implementation of gradient boosting that builds an ensemble of M shallow regression trees sequentially. Each tree corrects the pseudo-residuals left by the current ensemble:
+HistGBR (`sklearn.ensemble.HistGradientBoostingRegressor`) is an optimized implementation of gradient boosting that builds an ensemble of M shallow regression trees sequentially. Each tree corrects the pseudo-residuals left by the current ensemble:
 
 ```
 F_m(x) = F_{m-1}(x) + η × h_m(x)
 ```
 
-where η is the learning rate (0.05 in this work), and h_m(x) is the m-th tree trained to minimize the negative gradient of the loss function. The key optimization in HistGBR is that continuous features are pre-binned into at most 255 histogram bins before each node split, reducing the computational complexity from O(n × d) per split to O(B × d), where B = 255. This makes HistGBR orders of magnitude faster than standard GBRT on large datasets.
+where η is the learning rate (0.05 in this work), and h_m(x) is the m-th tree trained to minimize the negative gradient of the loss function. The key optimization in HistGBR is that continuous features are pre-binned into at most 255 histogram bins before each node split, reducing the computational complexity from O(n × d) per split to O(B × d), where B = 255. This makes HistGBR orders of magnitude faster than standard GBRT on large datasets — a critical advantage given our 1.58 million record training set.
 
-HistGBR also natively handles missing values by learning the optimal direction for missing data at each node, eliminating the need for imputation in the gradient boosting stage.
+HistGBR also natively handles missing values by learning the optimal direction for missing data at each node, eliminating the need for imputation. This is particularly important for this dataset where wind speed has 74.19% missingness.
 
-**Hyperparameter Configuration (post-tuning):**
+**Hyperparameter Configuration (post-tuning via RandomizedSearchCV):**
 
 | Hyperparameter | Value |
 |---|---|
-| `max_iter` (number of trees) | 500 |
+| `max_iter` (number of trees) | 100 |
 | `learning_rate` | 0.05 |
 | `max_depth` | 10 |
-| `min_samples_leaf` | 20 |
-| `l2_regularization` | 0.1 |
+| `l2_regularization` | 0.0 |
 | `max_bins` | 255 |
+| `loss` | squared_error |
+| `early_stopping` | True |
+| `random_state` | 42 |
+
+The hyperparameter search space explored during tuning was:
+
+| Hyperparameter | Search Space |
+|---|---|
+| `learning_rate` | [0.01, 0.05, 0.1, 0.2] |
+| `max_depth` | [5, 10, 15, None] |
+| `l2_regularization` | [0.0, 0.1, 0.5, 1.0] |
+| `max_iter` | [100, 200, 300] |
+
+### 5.2 Quantile Regression for Uncertainty
+
+In addition to the main squared-error model, a separate HistGBR model is trained with `loss='quantile'` and `quantile=0.95` to provide an upper-bound extreme rainfall estimate. This model uses 300 iterations with a learning rate of 0.05 and max depth of 10. The 95th-percentile prediction provides critical information for disaster preparedness, flagging potential extreme rainfall events.
+
+### 5.3 Physics-Constrained Inference
+
+A `PhysicsConstraints` class applies domain-knowledge rules post-prediction:
+
+1. **Warm Rain Fix (OLR > 260):** Rainfall set to 0 mm — clear sky with no convective activity.
+2. **Warm/Dry Condition (OLR > 200, UTH < 40%):** Rainfall capped at 5 mm — insufficient upper-tropospheric moisture for sustained precipitation.
+3. **Haze Filter (COT < 8):** Rainfall capped at 2 mm — optically thin clouds indicate non-precipitating conditions.
+4. **Desert Sanity Filter:** Rajasthan region (lat > 24°N, lon < 73°E) outside monsoon months (Jul/Aug) — aggressive dampening (×0.1).
+5. **Winter Dryness Clamp:** Dec/Jan, lat > 15°N — rainfall capped at 20 mm.
+
+These constraints eliminate physically impossible predictions and improve model trustworthiness for operational use.
 
 ---
 
@@ -254,41 +243,26 @@ HistGBR also natively handles missing values by learning the optimal direction f
 
 ### 6.1 Training Procedure
 
-All models were trained using the Scikit-Learn library (v1.3) in Python 3.10 on a standard workstation with 16 GB RAM. The training procedure for the primary HistGBR model was as follows:
+The model was trained using Scikit-Learn in Python on the 1,582,080-record processed dataset. The training procedure is as follows:
 
-1. **Data split**: 80% training (2018–2021 monsoon seasons), 20% test (2022 monsoon season).
-2. **Target transformation**: log(1 + y) applied to `rain_mm`.
-3. **Feature scaling**: StandardScaler fitted on training set, applied to both sets.
-4. **Sample weighting**: Records with rain_mm > 15 (heavy rain) were assigned a sample weight of 5× to counteract zero-inflation bias and improve heavy-rainfall prediction accuracy.
-5. **Hyperparameter tuning**: `RandomizedSearchCV` with 5-fold Time-Series Split (50 random configurations).
-6. **Final training**: Best hyperparameters applied to full training set.
-7. **Serialization**: `joblib.dump` to `models/model.pkl` and `models/scaler.pkl`.
+1. **Data loading**: `3months_dataset.parquet` loaded via Pandas (66.8 MB Parquet file).
+2. **Data cleaning**: Outlier clipping to physically realistic ranges (e.g., rain_mm: 0–500, OLR: 100–300 W/m², wind_speed: 0–60 m/s). Rows dropped only if target (`rain_mm`) is missing or both OLR and HEM are simultaneously absent.
+3. **Target transformation**: `log1p(rain_mm)` applied.
+4. **Feature engineering**: 13 features assembled (7 raw + 4 cyclic + 2 interaction terms).
+5. **Feature scaling**: StandardScaler fitted on training set, applied to all sets.
+6. **Sample weighting**: Records with `rain_mm > 0` assigned weight 5.0; zero-rain records receive weight 1.0.
+7. **Cross-validation**: 5-fold `TimeSeriesSplit` with per-fold RMSE, MAE, and R² tracking.
+8. **Hyperparameter tuning**: `RandomizedSearchCV` with 10 configurations over 3-fold CV on full dataset.
+9. **Final training**: Best estimator retrained on full dataset; quantile model (P95) trained separately.
+10. **Serialization**: Pickle to `models/model_frame_1.pkl` containing models dict, scaler, feature columns, and metrics.
 
 ### 6.2 Cross-Validation Strategy
 
-Standard k-fold cross-validation is inappropriate for time-series data because future observations may be included in training folds, producing optimistic validation scores. A 5-fold `TimeSeriesSplit` was used, where each fold's training set is a contiguous prefix of the data and the validation set is the immediately following temporal block. This ensures that validation always measures performance on unseen *future* data.
+Standard k-fold cross-validation is inappropriate for time-series data because future observations may be included in training folds, producing optimistic validation scores. A 5-fold `TimeSeriesSplit` was used, where each fold's training set is a contiguous prefix of the temporally sorted data and the validation set is the immediately following temporal block. This ensures that validation always measures performance on unseen *future* data.
+
+Each fold tests on 263,680 records (approximately 17 days × 15,360 grid cells), providing a robust evaluation of generalization to future time periods.
 
 ### 6.3 Evaluation Metrics
-
-**Accuracy** (classification sub-task):
-```
-Accuracy = (TP + TN) / (TP + TN + FP + FN)
-```
-
-**Precision:**
-```
-Precision = TP / (TP + FP)
-```
-
-**Recall (Sensitivity):**
-```
-Recall = TP / (TP + FN)
-```
-
-**F1-Score:**
-```
-F1 = 2 × (Precision × Recall) / (Precision + Recall)
-```
 
 **Root Mean Square Error (RMSE):**
 ```
@@ -310,57 +284,66 @@ R² = 1 − (SS_res / SS_tot)
 
 ## 7. Results and Performance Analysis
 
-### 7.1 Model Comparison
+### 7.1 Cross-Validation Results
 
-**Table 3: Model Performance Comparison (Test Set — 2022 Monsoon Season)**
+**Table 3: Per-Fold Cross-Validation Results (HistGBR, 13 features)**
 
-| Model | Accuracy (Classification) | Precision | Recall | F1-Score | RMSE (mm) | R² Score |
-|---|---|---|---|---|---|---|
-| Logistic Regression | 76.3% | 0.71 | 0.69 | 0.70 | 18.42 | 0.52 |
-| Decision Tree | 79.8% | 0.77 | 0.75 | 0.76 | 14.67 | 0.66 |
-| Random Forest | 84.1% | 0.83 | 0.81 | 0.82 | 9.83 | 0.79 |
-| Support Vector Machine | 81.5% | 0.80 | 0.78 | 0.79 | 11.25 | 0.73 |
-| **HistGBR (This Work)** | **88.4%** | **0.87** | **0.86** | **0.87** | **5.10** | **0.88** |
+| Fold | Train Size | Test Size | RMSE (mm) | MAE (mm) | R² |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | 263,680 | 263,680 | 15.79 | 5.32 | 0.766 |
+| 2 | 527,360 | 263,680 | 10.77 | 3.88 | 0.688 |
+| 3 | 791,040 | 263,680 | 14.53 | 4.66 | 0.785 |
+| 4 | 1,054,720 | 263,680 | 7.97 | 2.89 | 0.804 |
+| 5 | 1,318,400 | 263,680 | 9.44 | 2.99 | 0.767 |
+| **Average** | — | — | **11.70** | **3.95** | **0.762** |
 
-HistGBR achieves the best performance across all metrics. The 4.3 percentage point accuracy improvement over Random Forest is primarily attributable to the gradient boosting mechanism's ability to focus iteratively on difficult-to-predict heavy-rain events, amplified by the sample weighting strategy. The RMSE of 5.10 mm represents a 48% reduction relative to the Random Forest baseline.
+The significant variation across folds (RMSE ranging from 7.97 to 15.79) reflects the inherent temporal non-stationarity of monsoon rainfall. Fold 1, which trains on the least data, exhibits the highest error. Fold 4 achieves the best performance (RMSE=7.97, R²=0.804), as it benefits from the largest training window while evaluating on a period with more predictable rainfall patterns.
 
-### 7.2 Feature Importance Analysis
+### 7.2 Feature Set Comparison
 
-Feature importance was assessed using both permutation importance (model-agnostic) and the built-in mean impurity decrease (MID) for the Random Forest. The top-ranked features by permutation importance are:
+Two feature configurations were evaluated: the full 13-feature set (with interaction terms) and a reduced 11-feature set (without `olr_uth_interaction` and `temp_moisture`).
 
-1. **HEM** (Hydro-Estimator Method) — 0.38 importance score
-2. **OLR** (Outgoing Longwave Radiation) — 0.22
-3. **UTH** (Upper Tropospheric Humidity) — 0.14
-4. **olr_uth_interaction** — 0.09
-5. **COT** (Cloud Optical Thickness) — 0.07
-6. **CER** (Cloud Effective Radius) — 0.05
-7. **LST_K** — 0.03
-8. **WDP** (Wind Speed) — 0.02
+**Table 4: Feature Set Comparison (Average across 5-fold CV)**
 
-HEM dominates feature importance as expected, since it directly estimates rainfall from satellite cloud-top temperature data. The OLR-UTH interaction term, despite being a derived feature, ranks fourth, confirming the theoretical importance of coupling between deep convective cloud presence and upper-tropospheric moisture availability.
+| Feature Set | Num Features | RMSE (mm) | MAE (mm) | R² | Best max_depth |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **13 features (with interactions)** | 13 | **11.70** | **3.95** | **0.762** | 10 |
+| 11 features (without interactions) | 11 | 11.71 | 3.96 | 0.762 | 15 |
 
-**Figure 3 (Description):** *Feature importance bar chart for the Random Forest model showing mean impurity decrease (MID) scores normalized to [0, 1]. HEM records the highest importance (0.38), followed by OLR (0.22) and UTH (0.14). Engineered interaction features contribute non-trivially, validating the feature engineering choices.*
+The interaction terms provide marginal improvement in RMSE and MAE, while the 13-feature model achieves its best performance with a shallower max_depth (10 vs 15), suggesting that the interaction features enable the model to capture the same relationships with less depth, improving generalization.
 
-### 7.3 Confusion Matrix Analysis
+### 7.3 Optimized Hyperparameters
 
-The confusion matrix for the HistGBR model on the held-out 2022 test set (binary Rain / No Rain classification) is:
+**Table 5: Best Hyperparameters via RandomizedSearchCV**
 
-**Figure 4 (Description):** *Confusion matrix heatmap for HistGBR on the 2022 test set. The matrix shows 10,823 True Negatives (correct No-Rain predictions), 10,149 True Positives (correct Rain predictions), 1,387 False Positives (No-Rain predicted as Rain), and 1,241 False Negatives (Rain missed as No-Rain). The model achieves high sensitivity (Recall = 0.86), ensuring that rainfall events are rarely missed — critical for flood warning applications.*
+| Hyperparameter | Best Value |
+|---|---|
+| `max_iter` (Max Trees) | 100 |
+| Actual Trees Used (after early stopping) | 100 |
+| `learning_rate` | 0.05 |
+| `max_depth` | 10 |
+| `l2_regularization` | 0.0 |
+| `loss` | squared_error |
 
-|  | Predicted: No Rain | Predicted: Rain |
+### 7.4 Feature Importance Analysis
+
+Feature importance was assessed using permutation importance (model-agnostic) on the first 2,000 samples of the scaled dataset. Permutation importance measures the decrease in model performance when a feature's values are randomly shuffled, breaking the relationship between the feature and the target.
+
+The top-ranked features are consistent with established convective meteorology theory — HEM directly estimates rainfall, while OLR and UTH capture deep convection signatures.
+
+### 7.5 Rainfall Distribution Analysis
+
+The dataset exhibits the following rainfall class distribution:
+
+| Rainfall Category | Range | Fraction of Records |
 |---|---|---|
-| **Actual: No Rain** | 10,823 (TN) | 1,387 (FP) |
-| **Actual: Rain** | 1,241 (FN) | 10,149 (TP) |
+| No Rain | 0 mm | 26.4% |
+| Light Rain | 0.1 – 2.5 mm | ~24% |
+| Moderate Rain | 2.5 – 15 mm | ~32.6% |
+| Heavy Rain | > 15 mm | 16.9% |
+| Extreme Rain | > 50 mm | 4.6% |
 
-The high recall (0.86) is particularly important for operational use, as missing a rainfall event (False Negative) has greater consequences for disaster management than a false alarm (False Positive).
-
-### 7.4 Training vs. Validation Accuracy
-
-**Figure 5 (Description):** *Training and validation accuracy curves for HistGBR as a function of the number of boosting iterations (trees). Training accuracy converges near 94% while validation accuracy stabilizes at approximately 88.4% after ~300 iterations. The gap between training and validation curves is modest (~5.6 percentage points), indicating limited overfitting. Early stopping at 500 iterations provides the optimal bias-variance trade-off.*
-
-### 7.5 Accuracy Comparison Chart
-
-**Figure 6 (Description):** *Bar chart comparing test-set accuracy of all five models. HistGBR (88.4%) achieves the highest accuracy, followed by Random Forest (84.1%), SVM (81.5%), Decision Tree (79.8%), and Logistic Regression (76.3%). The 12.1 percentage point gap between HistGBR and the Logistic Regression baseline demonstrates the value of non-linear ensemble methods for this task.*
+The mean rainfall across all records is 9.81 mm/day with a standard deviation of 26.00 mm, reflecting the heavy-tailed monsoon distribution (maximum observed: 684 mm). The `log1p` target transformation and sample weighting strategy were essential for handling this distribution.
 
 ---
 
@@ -368,14 +351,15 @@ The high recall (0.86) is particularly important for operational use, as missing
 
 ### 8.1 Architecture Overview
 
-The frontend system comprises a React + Vite single-page application (SPA) served directly by the FastAPI backend. The interface is designed for non-expert users who wish to obtain location-specific 7-day rainfall forecasts without interacting with API endpoints directly.
+The frontend system comprises a React + Vite single-page application (SPA) with a FastAPI backend. The interface is designed for non-expert users who wish to obtain location-specific 7-day rainfall forecasts without interacting with API endpoints directly.
 
 **Technologies Used:**
-- **React 18** + **Vite 4**: Component-based SPA framework with hot-module replacement for rapid development.
+- **React 18** + **Vite**: Component-based SPA framework with hot-module replacement for rapid development.
 - **Tailwind CSS**: Utility-first CSS framework for responsive, accessible design.
 - **FastAPI** (Python): ASGI-based REST API backend with Pydantic v2 request/response validation.
 - **Uvicorn**: High-performance ASGI server for production deployment.
 - **Geoapify Geocoding API**: Location name-to-coordinate conversion with autocomplete support.
+- **slowapi**: Rate limiting per client IP to prevent API abuse.
 
 ### 8.2 User Input Parameters
 
@@ -386,18 +370,16 @@ The user interface collects the following inputs:
 | Location Search | Text + Autocomplete | City / district name (minimum 3 characters) |
 | Forecast Date | Auto-populated | 7-day window starting from current date |
 
-After the user selects a location from the autocomplete dropdown, the system automatically derives the geographical coordinates (latitude, longitude) via the Geoapify API.
+After the user selects a location from the autocomplete dropdown, the system automatically derives the geographical coordinates (latitude, longitude) via the Geoapify API and maps them to the nearest 0.25° grid cell.
 
 ### 8.3 Prediction Display
 
-The backend returns a `ForecastResponse` JSON object containing, for each of the 7 forecast days:
+The backend returns a forecast JSON object containing, for each of the 7 forecast days:
 - `date`: ISO 8601 date string.
-- `predicted_rainfall_mm`: Median rainfall estimate (P50 quantile).
-- `extreme_rainfall_mm`: Extreme scenario estimate (P95 quantile).
-- `category`: One of `No Rain`, `Light Rain`, `Moderate Rain`, or `Heavy Rain`.
-- `confidence_pct`: Estimated prediction confidence derived from cross-validation spread.
+- `rainfall_mm`: Predicted rainfall estimate (mm/day).
+- `status`: One of `No Rain`, `Light Rain`, `Moderate Rain`, or `Heavy Rain`.
 
-The frontend renders this as an interactive bar chart overlaid with a line chart for the P95 extreme estimate. Each day card also displays a colour-coded rain category icon and a brief textual interpretation.
+The frontend renders this as an interactive forecast display with colour-coded rain category indicators and a brief textual interpretation for each day.
 
 ### 8.4 UI Workflow
 
@@ -411,22 +393,23 @@ Geoapify Autocomplete → Location Suggestions
 User Selects Location → Lat/Lon Resolved
          │
          ▼
+Grid Mapping → Nearest 0.25° Grid Cell Identified
+         │
+         ▼
 POST /api/v1/forecast → FastAPI Backend
          │
          ▼
-Feature Assembly → StandardScaler → HistGBR Inference
+Feature Assembly (from master dataset + stochastic perturbation)
          │
          ▼
-Physics Constraint Enforcement
+StandardScaler → HistGBR Inference → Physics Constraints
          │
          ▼
-ForecastResponse (7 Days) → React Frontend
+Forecast Response (7 Days) → React Frontend
          │
          ▼
-Interactive Rainfall Chart + Day Cards → User
+Interactive Rainfall Visualization → User
 ```
-
-**Figure 7 (Description):** *Screenshot of the web interface. The left panel contains a location search box with autocomplete. The central panel displays a 7-day forecast as an interactive bar + line chart, where blue bars represent median rainfall estimates and an orange line traces the 95th-percentile extreme estimate. Below the chart, individual day cards show date, rainfall category, and estimated mm with colour coding: grey (No Rain), light blue (Light Rain), blue (Moderate Rain), dark blue/red (Heavy Rain).*
 
 ### 8.5 API Endpoints
 
@@ -447,33 +430,37 @@ Rate limiting is enforced per client IP via `slowapi` to prevent abuse of the Ge
 The HistGBR-based system offers several advantages over traditional NWP approaches for operational forecasting at district scale:
 
 - **Speed**: A single 7-day forecast query executes in under 50 ms on CPU-only hardware, compared to hours for NWP ensemble runs.
-- **Data Efficiency**: The model achieves strong performance with only 7 satellite-derived input channels, avoiding the need for complete NWP initial conditions.
-- **Missing-Data Resilience**: HistGBR's native handling of missing values means partial satellite coverage (common during cyclone events) does not degrade inference.
-- **Interpretability**: Feature importance scores and physics post-processing constraints provide transparency about model decisions, addressing a common criticism of ML "black box" methods.
+- **Data Efficiency**: The model achieves R² = 0.762 with only 7 satellite-derived input channels plus 6 engineered features, avoiding the need for complete NWP initial conditions.
+- **Missing-Data Resilience**: HistGBR's native handling of missing values means that even 74% wind speed missingness does not require imputation or record deletion — a significant practical advantage for satellite data.
+- **Scalability**: Training on 1.58 million records completes efficiently due to HistGBR's histogram-based optimizations.
+- **Physics Grounding**: Post-processing constraints based on OLR, UTH, COT thresholds provide meteorologically plausible predictions, addressing a common criticism of ML "black box" methods.
 
 ### 9.2 Limitations
 
 Several limitations must be acknowledged:
 
-- **Spatial Generalization**: The model was trained exclusively on Indian grid cells. Performance over non-monsoonal climates (e.g., arid regions, high-altitude terrain) is untested and likely degraded.
-- **Temporal Range**: Training data spans only five monsoon seasons (2018–2022). Longer temporal coverage including dry-season and pre-monsoon periods would improve year-round applicability.
-- **Observation Lag**: Satellite retrievals are not truly real-time in this implementation; the current system uses climatological historical averages for the nearest grid cell, modulated by a deterministic random seed. Integration of live satellite APIs would improve forecast timeliness.
-- **Extreme Event Under-Prediction**: Despite sample weighting, the model still under-predicts extreme rainfall events (> 50 mm/day) associated with cyclones or orographic precipitation, as these represent a very small fraction of training samples.
+- **R² = 0.762**: While competitive, the model explains approximately 76.2% of rainfall variance. The remaining 23.8% reflects inherent stochasticity in monsoon dynamics and the absence of key predictors such as atmospheric vorticity, convective available potential energy (CAPE), and radar reflectivity.
+- **Single-Season Training**: The dataset spans only the 2025 monsoon season (103 days). Multi-year training data would improve the model's ability to generalize across inter-annual monsoon variability.
+- **Spatial Generalization**: The model was trained exclusively on Indian grid cells. Performance over non-monsoonal climates is untested and likely degraded.
+- **High Wind Speed Missingness**: 74.19% of wind speed values are missing, limiting the model's ability to leverage this potentially informative feature.
+- **Observation Lag**: The current system uses historical satellite composites from the master dataset with stochastic perturbation, rather than live satellite feeds. Integration of real-time MOSDAC APIs would improve forecast timeliness.
+- **Extreme Event Under-Prediction**: Despite sample weighting, the model may under-predict extreme rainfall events (> 50 mm/day, comprising 4.6% of records) due to the inherent rarity of such events in the training distribution.
 
 ### 9.3 Possible Improvements
 
+- **Multi-Year Dataset Expansion**: Extending training data across 5+ monsoon seasons would capture inter-annual variability (El Niño, La Niña, IOD effects).
 - **LSTM / Transformer Models**: Recurrent architectures trained on multi-day input sequences could capture temporal dependencies (e.g., pre-monsoon moisture build-up) that the current single-day feature vector cannot represent.
 - **Ensemble Blending**: Combining HistGBR predictions with a physics-based NWP model (e.g., WRF) via post-processing could improve extreme event performance.
 - **Real-Time Satellite API Integration**: Connecting to MOSDAC (Meteorological and Oceanographic Satellite Data Archival Centre) real-time data feeds would enable true nowcasting.
-- **Probabilistic Output Calibration**: Isotonic regression or Platt scaling could calibrate the model's confidence estimates against observed reliability curves.
+- **Additional Features**: Incorporating elevation data, soil moisture, CAPE, and radar reflectivity could improve R² beyond 0.80.
 
 ---
 
 ## 10. Conclusion
 
-This paper presented a machine learning–based rainfall prediction system that leverages INSAT-3DR satellite-derived atmospheric features to forecast daily precipitation at 0.25° spatial resolution over India. A Histogram-based Gradient Boosting Regressor was trained on a dataset of over 120,000 records using 5-fold Time-Series Cross-Validation and physics-informed sample weighting to address zero-inflation bias.
+This paper presented a machine learning–based rainfall prediction system that leverages INSAT-3DR satellite-derived atmospheric features to forecast daily precipitation over India. A Histogram-based Gradient Boosting Regressor was trained on a dataset of 1,582,080 records spanning 15,360 grid cells and 103 days of the 2025 Indian monsoon season, using 5-fold Time-Series Cross-Validation and physics-informed sample weighting to address zero-inflation bias.
 
-The proposed model achieved an R² Score of 0.88 and an RMSE of 5.10 mm on the held-out 2022 test season, outperforming all evaluated baselines including Logistic Regression (R² = 0.52), Decision Tree (R² = 0.66), Random Forest (R² = 0.79), and SVM (R² = 0.73). Feature importance analysis confirmed that HEM, OLR, and UTH are the most informative predictors, consistent with established convective meteorology theory.
+The proposed model achieved an average cross-validated RMSE of 11.70 mm, MAE of 3.95 mm, and R² of 0.762, with the best individual fold achieving R² = 0.804 and RMSE = 7.97 mm. Hyperparameter tuning via RandomizedSearchCV selected a compact model of 100 trees with learning rate 0.05 and max depth 10. Feature importance analysis confirmed that HEM, OLR, and UTH are the most informative predictors, consistent with established convective meteorology theory.
 
 A fully functional web-based forecast interface was developed and deployed using React, FastAPI, and Uvicorn, enabling non-expert users to access 7-day location-specific rainfall forecasts through an intuitive browser-based application. Physics-constrained post-processing and quantile regression for uncertainty estimation ensure that system outputs are both meteorologically plausible and informative for risk assessment.
 
@@ -485,17 +472,19 @@ The system represents a practical and scalable approach to AI-assisted weather f
 
 The following directions are identified for future extension of this research:
 
-1. **Deep Learning (LSTM / Transformer):** Recurrent neural networks or attention-based transformers trained on multi-day input sequences would capture temporal autocorrelation in atmospheric moisture transport, potentially reducing RMSE below 3 mm.
+1. **Multi-Year Training Data:** Extending the dataset to cover 5+ monsoon seasons (2020–2025) would capture inter-annual monsoon variability, El Niño/La Niña effects, and improve model robustness — targeting R² > 0.85.
 
-2. **Real-Time INSAT-3DR API Integration:** Connecting the inference pipeline to ISRO MOSDAC live Level-2 data streams would enable 0-6 hour nowcasting capability.
+2. **Deep Learning (LSTM / Transformer):** Recurrent neural networks or attention-based transformers trained on multi-day input sequences would capture temporal autocorrelation in atmospheric moisture transport, potentially reducing RMSE below 8 mm.
 
-3. **Multi-Model Ensemble:** Probabilistic blending of the ML model with a physics-based regional NWP model (WRF-ARW) via Bayesian model averaging could improve reliability in extreme precipitation scenarios.
+3. **Real-Time INSAT-3DR API Integration:** Connecting the inference pipeline to ISRO MOSDAC live Level-2 data streams would enable 0-6 hour nowcasting capability.
 
-4. **Larger and Multi-Climate Datasets:** Extending the training corpus to include all-season data across diverse climate zones (maritime, tropical, semi-arid) and multiple satellite platforms (MSG/SEVIRI, Himawari-8) would improve global generalizability.
+4. **Multi-Model Ensemble:** Probabilistic blending of the ML model with a physics-based regional NWP model (WRF-ARW) via Bayesian model averaging could improve reliability in extreme precipitation scenarios.
 
-5. **Mobile Application:** Extending the web interface to a progressive web app (PWA) or native mobile application would increase accessibility for farmers and disaster responders in areas with limited desktop internet access.
+5. **Additional Features:** Incorporating ground elevation, soil moisture, CAPE, and atmospheric vorticity as features could significantly improve predictive performance.
 
-6. **Explainable AI (XAI) Dashboard:** Integrating SHAP (SHapley Additive exPlanations) values into the user interface would allow domain experts to audit individual forecast decisions and build trust in the system.
+6. **Mobile Application:** Extending the web interface to a progressive web app (PWA) or native mobile application would increase accessibility for farmers and disaster responders in areas with limited desktop internet access.
+
+7. **Explainable AI (XAI) Dashboard:** Integrating SHAP (SHapley Additive exPlanations) values into the user interface would allow domain experts to audit individual forecast decisions and build trust in the system.
 
 ---
 
@@ -531,4 +520,4 @@ The following directions are identified for future extension of this research:
 
 ---
 
-*© 2024 The Authors. Published under the terms of the CC BY 4.0 licence.*
+*© 2025 The Authors. Published under the terms of the CC BY 4.0 licence.*

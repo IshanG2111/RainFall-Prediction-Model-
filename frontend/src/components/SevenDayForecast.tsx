@@ -19,7 +19,7 @@ export default function SevenDayForecast({ forecast }: Props) {
   if (!forecast) {
     return (
       <div className="sketch-border p-6 h-full">
-        <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h3>
+        <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h2>
         <div className="flex items-center justify-center h-48 text-gray-400">
           <span className="text-sm font-bold uppercase tracking-widest">Awaiting prediction...</span>
         </div>
@@ -29,7 +29,7 @@ export default function SevenDayForecast({ forecast }: Props) {
 
   return (
     <div className="sketch-border p-6 h-full">
-      <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h3>
+      <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6 mt-4">
         {forecast.forecast.slice(1).map((day, idx) => {

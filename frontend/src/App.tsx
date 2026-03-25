@@ -67,7 +67,7 @@ export default function App() {
   return (
     <div className="min-h-screen p-4 md:p-8 lg:p-12 relative z-0">
       <div className="interactive-grid-overlay"></div>
-      <div className="max-w-7xl mx-auto relative z-10">
+      <main className="max-w-7xl mx-auto relative z-10">
         <Header />
 
         {error && (
@@ -110,7 +110,7 @@ export default function App() {
         <div className="mt-16 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
           // SMART PRECIPITATION FORECASTING
         </div>
-      </div>
+      </main>
     </div>
   );
 }
