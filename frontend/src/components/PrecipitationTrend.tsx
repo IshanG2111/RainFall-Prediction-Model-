@@ -42,7 +42,7 @@ export default function PrecipitationTrend({ forecast }: Props) {
 
   return (
     <div className="sketch-border p-6">
-      <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">Precipitation Trend</h3>
+      <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">Precipitation Trend</h2>
 
       <div className="h-[350px] w-full mt-8">
         <ResponsiveContainer width="100%" height="100%">

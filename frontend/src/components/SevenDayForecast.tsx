@@ -1,5 +1,6 @@
 import { Cloud, CloudRain, CloudDrizzle, Sun } from 'lucide-react';
 import type { ForecastResponse } from '../types';
+import SeverityBadge from './SeverityBadge';
 
 interface Props {
   forecast: ForecastResponse | null;
@@ -18,7 +19,7 @@ export default function SevenDayForecast({ forecast }: Props) {
   if (!forecast) {
     return (
       <div className="sketch-border p-6 h-full">
-        <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h3>
+        <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h2>
         <div className="flex items-center justify-center h-48 text-gray-400">
           <span className="text-sm font-bold uppercase tracking-widest">Awaiting prediction...</span>
         </div>
@@ -28,7 +29,7 @@ export default function SevenDayForecast({ forecast }: Props) {
 
   return (
     <div className="sketch-border p-6 h-full">
-      <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h3>
+      <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">7-Day Forecast</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6 mt-4">
         {forecast.forecast.slice(1).map((day, idx) => {
@@ -48,7 +49,7 @@ export default function SevenDayForecast({ forecast }: Props) {
               </div>
               <div className="text-gray-900 font-bold tracking-widest mt-4 mb-3 text-lg">{dayName}</div>
               <Icon className="w-10 h-10 mb-3 text-gray-800" strokeWidth={1.5} />
-              <div className="font-bold text-sm mb-1">{day.status}</div>
+              <SeverityBadge status={day.status} className="mb-2 !text-[10px] sm:!text-xs" />
               <div className="text-sm font-bold border-b-2 border-gray-900 mb-3 pb-1 w-full">{day.rainfall_mm.toFixed(1)} mm</div>
               <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
                 {day.rainfall_mm > 0 ? `${day.rainfall_mm.toFixed(2)} mm` : 'Dry'}

@@ -59,7 +59,7 @@ export default function PredictionForm({ onSearch, onSelectLocation, onPredict, 
 
   return (
     <div className="sketch-border p-6 h-full flex flex-col justify-between">
-      <h3 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">Query Parameters</h3>
+      <h2 className="font-hand text-3xl font-bold mb-6 border-b-2 border-dashed border-gray-300 pb-2">Query Parameters</h2>
 
       <div className="flex flex-col gap-8 flex-1 justify-center">
         {/* Location Input with Autocomplete */}
