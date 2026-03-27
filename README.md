@@ -1,6 +1,6 @@
 <div align="center">
 <!-- Banner Wave -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:4FC3F7,100:1565C0&height=140&section=header&text=7-Day%20Rainfall%20Forecasting%20AI&fontSize=28&fontColor=FFFFFF&animation=fadeIn&fontAlignY=38" width="100%" alt=""/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:4FC3F7,100:1565C0&height=140&section=header&text=वृष्टि%20AI%20-%20Smart%20Precipitation%20Forecasting&fontSize=28&fontColor=FFFFFF&animation=fadeIn&fontAlignY=38" width="100%" alt=""/>
 
 <br/>
 
@@ -30,7 +30,7 @@
 
 <br/>
 
-![UI Screenshot](docs/screenshot.png)
+![UI Screenshot](docs/frontend.png)
 
 ---
 
@@ -50,6 +50,7 @@ Most rainfall models are "black boxes" — they look accurate on training data b
 
 ## 🔄 Recent Improvements
 
+- **Interactive Sketch UI & Rebranding**: Transformed the frontend into **वृष्टि AI** (formerly PLUVIO) featuring an authentic Neo-Brutalist/Sketch aesthetic. Highlights include a dynamic mouse-reactive tracking grid, animated ink-pulse severity badges, CartoDB Voyager maps with custom architectural CSS filters, and luxury typography (Cormorant & Tiro Devanagari).
 - **Consistent Predictions**: Resolved issues with random feature generation by implementing a deterministic random seed based on location and date. This ensures consistent weather feature simulation across reloads without losing variance.
 - **Enhanced Accuracy**: Added new meteorological interaction features (`olr_uth_interaction`, `temp_moisture`) and implemented Sample Weights to handle class imbalance (zero-inflation bias), significantly improving heavy rainfall predictions.
 - **Automated Tuning**: Replaced hardcoded parameters with `RandomizedSearchCV` for optimal hyperparameter configuration during training.
@@ -60,11 +61,11 @@ Most rainfall models are "black boxes" — they look accurate on training data b
 
 Benchmarked on ~120,000 records using a proper Time-Series Split:
 
-| Metric       | Score   | Interpretation          |
-|--------------|---------|-------------------------|
-| **RMSE**     | 5.10 mm | High precision          |
-| **R² Score** | 0.88    | Strong predictive power |
-| **MAE**      | 0.54 mm | Low average error       |
+| Metric       | Score    | Interpretation          |
+|--------------|----------|-------------------------|
+| **RMSE**     | 11.71 mm | High precision          |
+| **R² Score** | 0.76     | Strong predictive power |
+| **MAE**      | 3.05 mm  | Low average error       |
 
 ---
 
@@ -260,6 +261,12 @@ See [`docs/backend_architecture.md`](docs/backend_architecture.md) for full requ
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 
 </div>
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 

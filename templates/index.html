@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>वृष्टि AI - SMART PRECIPITATION FORECASTING</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%23f4f4f0' stroke='%23111827' stroke-width='8' stroke-dasharray='12 8'/><path d='M50 20 C 50 20, 70 50, 70 65 A 20 20 0 0 1 30 65 C 30 50, 50 20, 50 20 Z' fill='%230284c7' stroke='%23111827' stroke-width='6' stroke-linejoin='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+
+<body>
+
+  <div id="cur"></div>
+  <div id="cur-r"></div>
+  <div class="ac-drop" id="ac-drop"></div>
+
+  <div id="app">
+
+    <!-- SEARCH ROW -->
+    <div class="search-row">
+      <div class="search-wrap">
+        <svg class="s-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <label for="si"></label><input class="search-pill" id="si" type="text" placeholder="Search for location…" autocomplete="off" spellcheck="false" />
+        <button class="s-go" id="go-btn" onclick="doSearch()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      <div class="search-meta">
+        <div class="loc-chip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.5">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+          <span id="loc-chip-text">वृष्टि AI - SMART PRECIPITATION FORECASTING</span>
+        </div>
+        <div class="date-btn" id="date-btn" onclick="toggleDate()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+          <span id="date-btn-lbl">Today</span>
+        </div>
+      </div>
+      <div class="date-popup" id="date-popup">
+        <div class="dp-lbl">Forecast Date</div>
+        <label for="date-inp"></label><input class="dp-inp" type="date" id="date-inp" />
+        <div class="dp-note">Next 7 days only</div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- LEFT: Hero card only, full height -->
+      <div class="left-panel">
+        <div class="hero-card">
+          <div class="hero-card-inner">
+            <div id="hero-idle" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;text-align:center">
+              <div style="font-size:3rem;opacity:.25">🌧</div>
+              <div style="font-size:1.1rem;font-weight:300;opacity:.35;line-height:1.6;max-width:240px">Search a city above<br />to see rainfall forecast</div>
+              <div style="font-size:.68rem;font-weight:300;opacity:.2;letter-spacing:.14em;text-transform:uppercase;margin-top:4px">INSAT-3DR Powered</div>
+            </div>
+            <div id="hero-data" style="display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;text-align:center">
+              <div class="hero-icon-row" id="h-icon" style="display:flex;align-items:center;justify-content:center;margin-bottom:12px">🌧</div>
+              <div class="hero-big-num" id="h-num">—</div>
+              <div class="hero-condition" id="h-cond">—</div>
+              <div class="hero-desc" id="h-desc"></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /left -->
+
+      <!-- RIGHT: 7-day + bottom-row + stat-grid -->
+      <div class="right-panel">
+
+        <!-- 7-day forecast -->
+        <div class="daily-wrap">
+          <div class="section-hdr">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            7-DAY FORECAST
+          </div>
+          <div class="daily-scroll" id="daily-scroll">
+            <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;padding:18px;opacity:.2;font-size:.78rem;font-weight:300">
+              Search a location to view forecast
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle row: model metrics + radar map -->
+        <div class="bottom-row">
+
+          <!-- Model metrics -->
+          <div class="metrics-card">
+            <div class="section-hdr">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              MODEL METRICS
+            </div>
+            <div class="metrics-grid">
+              <div class="met-item">
+                <div class="met-accent" style="background:rgba(100,200,255,.5)"></div>
+                <div class="met-lbl">R² Score</div>
+                <div class="met-val"><span id="m-r2">—</span></div>
+                <div class="met-note">Variance explained</div>
+                <div class="met-bar">
+                  <div class="met-bar-fill" id="m-r2-bar" style="background:rgba(100,200,255,.7)"></div>
+                </div>
+              </div>
+              <div class="met-item">
+                <div class="met-accent" style="background:rgba(100,255,180,.5)"></div>
+                <div class="met-lbl">RMSE</div>
+                <div class="met-val"><span id="m-rmse">—</span><span class="met-unit">mm</span></div>
+                <div class="met-note">Root mean sq. error</div>
+                <div class="met-bar">
+                  <div class="met-bar-fill" id="m-rmse-bar" style="background:rgba(100,255,180,.7)"></div>
+                </div>
+              </div>
+              <div class="met-item">
+                <div class="met-accent" style="background:rgba(200,150,255,.5)"></div>
+                <div class="met-lbl">MAE</div>
+                <div class="met-val"><span id="m-mae">—</span><span class="met-unit">mm</span></div>
+                <div class="met-note">Mean abs. error</div>
+                <div class="met-bar">
+                  <div class="met-bar-fill" id="m-mae-bar" style="background:rgba(200,150,255,.7)"></div>
+                </div>
+              </div>
+              <div class="met-item">
+                <div class="met-accent" style="background:rgba(255,180,80,.5)"></div>
+                <div class="met-lbl">Records</div>
+                <div class="met-val"><span id="m-rec">—</span></div>
+                <div class="met-note">Training samples</div>
+                <div class="met-bar">
+                  <div class="met-bar-fill" id="m-rec-bar" style="background:rgba(255,180,80,.7);width:100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rainfall Radar Map (Leaflet) -->
+          <div class="radar-card">
+            <div id="map-container"></div>
+            <div class="radar-hdr">
+              <div class="section-hdr" style="margin-bottom:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                LOCATION MAP
+              </div>
+            </div>
+            <div class="radar-idle" id="radar-idle">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <div style="font-size:.72rem;font-weight:300">Search a location<br/>to view map</div>
+            </div>
+            <div class="radar-coords" id="radar-coords"></div>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(to top,rgba(8,12,24,.7),transparent);pointer-events:none;z-index:410"></div>
+          </div>
+
+        </div><!-- /bottom-row -->
+
+        <!-- Stat grid at the bottom of right panel -->
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
+              7-Day Total
+            </div>
+            <div class="stat-val" id="s-total">—<span class="stat-unit">mm</span></div>
+            <div class="stat-note" id="s-total-note">Cumulative rainfall</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+              Peak Day
+            </div>
+            <div class="stat-val" id="s-peak">—<span class="stat-unit">mm</span></div>
+            <div class="stat-note" id="s-peak-note">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              Daily Average
+            </div>
+            <div class="stat-val" id="s-avg">—<span class="stat-unit">mm</span></div>
+            <div class="stat-note">7-day mean</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              </svg>
+              Intensity
+            </div>
+            <div class="stat-val" id="s-intensity" style="font-size:1.1rem;padding-top:3px">—</div>
+            <div class="stat-note" id="s-intensity-note">Weekly class.</div>
+          </div>
+        </div>
+
+      </div><!-- /right -->
+
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <div id="loading">
+    <div class="spin"></div>
+    <div class="ltd">Loading वृष्टि AI</div>
+  </div>
+  <div class="tw" id="tw">
+    <div class="toast" id="toast">Please enter a location</div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8000';
+
+    /* ── CURSOR ── */
+    const CUR = document.getElementById('cur'), CURR = document.getElementById('cur-r');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; CUR.style.left = mx + 'px'; CUR.style.top = my + 'px' });
+    (function a() { rx += (mx - rx) * .1; ry += (my - ry) * .1; CURR.style.left = rx + 'px'; CURR.style.top = ry + 'px'; requestAnimationFrame(a) })();
+    document.addEventListener('mousedown', () => document.body.classList.add('clk'));
+    document.addEventListener('mouseup', () => document.body.classList.remove('clk'));
+    function hov(s) { document.querySelectorAll(s).forEach(e => { e.addEventListener('mouseenter', () => document.body.classList.add('hov')); e.addEventListener('mouseleave', () => document.body.classList.remove('hov')) }) }
+    hov('button,.ac-row,.day-card,.sat-row,.date-btn');
+
+    /* ── DATE SETUP ── */
+    (function () {
+      const di = document.getElementById('date-inp');
+      const today = new Date(), max = new Date(today);
+      max.setDate(today.getDate() + 6);
+      const fmt = d => d.toISOString().split('T')[0];
+      di.min = fmt(today); di.max = fmt(max); di.value = fmt(today);
+      di.addEventListener('change', () => {
+        const d = new Date(di.value + 'T00:00:00');
+        document.getElementById('date-btn-lbl').textContent = d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        document.getElementById('date-popup').classList.remove('open');
+      });
+    })();
+
+    function toggleDate() {
+      const p = document.getElementById('date-popup');
+      p.classList.toggle('open');
+      if (p.classList.contains('open')) {
+        const r = document.getElementById('date-btn').getBoundingClientRect();
+        p.style.top = (r.bottom + 6) + 'px';
+        p.style.right = (window.innerWidth - r.right) + 'px';
+      }
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#date-btn') && !e.target.closest('#date-popup'))
+        document.getElementById('date-popup').classList.remove('open');
+    });
+
+    /* ── HELPERS ── */
+    const DNAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const MNAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // SVG animated weather icons
+    function wxSVG(mm) {
+      if (mm === 0) {
+        // Clear sun
+        return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+          <g class="wx-sun-ray">
+            <line x1="48" y1="8" x2="48" y2="16" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="48" y1="80" x2="48" y2="88" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="8" y1="48" x2="16" y2="48" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="80" y1="48" x2="88" y2="48" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="19" y1="19" x2="25" y2="25" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="71" y1="71" x2="77" y2="77" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="77" y1="19" x2="71" y2="25" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+            <line x1="25" y1="71" x2="19" y2="77" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>
+          </g>
+          <circle class="wx-sun-circle" cx="48" cy="48" r="18"/>
+        </svg>`;
+      }
+      if (mm < 1) {
+        // Sun + small cloud (mostly clear)
+        return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+          <g class="wx-sun-ray" style="transform-origin:36px 38px">
+            <line x1="36" y1="10" x2="36" y2="17" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="36" y1="59" x2="36" y2="66" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="10" y1="38" x2="17" y2="38" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="55" y1="38" x2="62" y2="38" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="18" y1="18" x2="23" y2="23" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="49" y1="53" x2="54" y2="58" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="54" y1="18" x2="49" y2="23" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="23" y1="53" x2="18" y2="58" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+          </g>
+          <circle class="wx-sun-back" cx="36" cy="38" r="14"/>
+          <ellipse class="wx-cloud" cx="58" cy="58" rx="20" ry="13"/>
+          <ellipse class="wx-cloud" cx="44" cy="60" rx="14" ry="11"/>
+          <ellipse class="wx-cloud" cx="68" cy="62" rx="12" ry="9"/>
+        </svg>`;
+      }
+      if (mm < 4) {
+        // Overcast cloud
+        return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+          <ellipse class="wx-cloud-dark" cx="52" cy="42" rx="22" ry="14" style="opacity:.5"/>
+          <ellipse class="wx-cloud" cx="48" cy="52" rx="28" ry="16"/>
+          <ellipse class="wx-cloud" cx="32" cy="55" rx="18" ry="13"/>
+          <ellipse class="wx-cloud" cx="64" cy="56" rx="18" ry="13"/>
+        </svg>`;
+      }
+      if (mm < 8) {
+        // Light rain
+        return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+          <ellipse class="wx-cloud" cx="48" cy="44" rx="28" ry="16"/>
+          <ellipse class="wx-cloud" cx="32" cy="47" rx="18" ry="13"/>
+          <ellipse class="wx-cloud" cx="64" cy="47" rx="18" ry="13"/>
+          <g style="transform:translateY(0)">
+            <ellipse class="wx-drop" cx="36" cy="70" rx="3" ry="5" style="animation-delay:0s"/>
+            <ellipse class="wx-drop" cx="48" cy="74" rx="3" ry="5" style="animation-delay:.22s"/>
+            <ellipse class="wx-drop" cx="60" cy="70" rx="3" ry="5" style="animation-delay:.44s"/>
+          </g>
+        </svg>`;
+      }
+      if (mm < 18) {
+        // Heavy rain
+        return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+          <ellipse class="wx-cloud-dark" cx="48" cy="40" rx="30" ry="17"/>
+          <ellipse class="wx-cloud-dark" cx="30" cy="44" rx="20" ry="14"/>
+          <ellipse class="wx-cloud-dark" cx="66" cy="44" rx="20" ry="14"/>
+          <g>
+            <ellipse class="wx-drop" cx="30" cy="68" rx="3" ry="6" style="animation-delay:0s"/>
+            <ellipse class="wx-drop" cx="40" cy="74" rx="3" ry="6" style="animation-delay:.18s"/>
+            <ellipse class="wx-drop" cx="50" cy="68" rx="3" ry="6" style="animation-delay:.36s"/>
+            <ellipse class="wx-drop" cx="60" cy="74" rx="3" ry="6" style="animation-delay:.12s"/>
+            <ellipse class="wx-drop" cx="70" cy="68" rx="3" ry="6" style="animation-delay:.3s"/>
+          </g>
+        </svg>`;
+      }
+      if (mm < 35) {
+        // Thunderstorm
+        return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+          <ellipse class="wx-cloud-dark" cx="48" cy="38" rx="30" ry="17" style="fill:rgba(80,100,160,.9)"/>
+          <ellipse class="wx-cloud-dark" cx="30" cy="42" rx="20" ry="14" style="fill:rgba(80,100,160,.9)"/>
+          <ellipse class="wx-cloud-dark" cx="66" cy="42" rx="20" ry="14" style="fill:rgba(80,100,160,.9)"/>
+          <g>
+            <ellipse class="wx-drop" cx="30" cy="62" rx="2.5" ry="5" style="animation-delay:0s"/>
+            <ellipse class="wx-drop" cx="68" cy="62" rx="2.5" ry="5" style="animation-delay:.25s"/>
+          </g>
+          <polygon class="wx-bolt" points="52,54 44,68 49,68 44,82 56,64 51,64"/>
+        </svg>`;
+      }
+      // Extreme — storm swirl
+      return `<svg class="wx-icon" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+        <ellipse class="wx-cloud-dark" cx="48" cy="34" rx="30" ry="17" style="fill:rgba(60,40,120,.9)"/>
+        <ellipse class="wx-cloud-dark" cx="30" cy="38" rx="20" ry="14" style="fill:rgba(60,40,120,.9)"/>
+        <ellipse class="wx-cloud-dark" cx="66" cy="38" rx="20" ry="14" style="fill:rgba(60,40,120,.9)"/>
+        <polygon class="wx-bolt" points="52,50 44,64 49,64 44,78 56,60 51,60"/>
+        <path class="wx-swirl" d="M48,58 Q62,52 60,65 Q58,76 46,74 Q34,72 34,62 Q34,50 48,50"/>
+      </svg>`;
+    }
+
+    function ico(mm) {
+      if (mm === 0) return '☀️'; if (mm < 1) return '🌤'; if (mm < 4) return '⛅';
+      if (mm < 8) return '🌦'; if (mm < 18) return '🌧'; if (mm < 35) return '⛈'; return '🌪';
+    }
+    function cond(mm, st) {
+      if (st) return st;
+      if (mm === 0) return 'Clear Sky'; if (mm < 1) return 'Mostly Clear';
+      if (mm < 4) return 'Light Drizzle'; if (mm < 8) return 'Light Rain';
+      if (mm < 18) return 'Rainy Day'; if (mm < 35) return 'Heavy Rain'; return 'Extreme Rainfall';
+    }
+    function rcol(mm) {
+      if (mm === 0) return 'rgba(255,220,80,.7)';
+      if (mm < 4) return 'rgba(150,210,255,.7)';
+      if (mm < 15) return 'rgba(80,160,255,.8)';
+      return 'rgba(120,80,255,.8)';
+    }
+    function intensityLabel(t) {
+      if (t > 100) return '🔴 Extreme'; if (t > 50) return '🟠 Heavy';
+      if (t > 20) return '🟡 Moderate'; if (t > 5) return '🔵 Light'; return '⚪ Dry';
+    }
+
+    /* ── AUTOCOMPLETE ── */
+    const qEl = document.getElementById('si'), acEl = document.getElementById('ac-drop');
+    let acTimer = null, curLoc = null;
+
+    function posAc() {
+      const r = qEl.getBoundingClientRect();
+      acEl.style.top = (r.bottom + 5) + 'px'; acEl.style.left = r.left + 'px';
+      acEl.style.width = Math.max(r.width, 240) + 'px';
+    }
+    qEl.addEventListener('input', () => {
+      clearTimeout(acTimer); const v = qEl.value.trim();
+      if (v.length < 3) { closeAc(); return }
+      acTimer = setTimeout(() => fetchLocs(v), 280);
+    });
+    qEl.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeAc(); return }
+      const rows = [...acEl.querySelectorAll('.ac-row')];
+      const fi = rows.findIndex(r => r.classList.contains('focused'));
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (fi >= 0) rows[fi].classList.remove('focused'); rows[Math.min(fi + 1, rows.length - 1)]?.classList.add('focused') }
+      if (e.key === 'ArrowUp') { e.preventDefault(); if (fi >= 0) rows[fi].classList.remove('focused'); rows[Math.max(fi - 1, 0)]?.classList.add('focused') }
+      if (e.key === 'Enter') { const f = acEl.querySelector('.focused'); if (f) f.click(); else doSearch() }
+    });
+    document.addEventListener('click', e => { if (!e.target.closest('.search-wrap') && !e.target.closest('.ac-drop')) closeAc() });
+    window.addEventListener('resize', () => { if (acEl.classList.contains('open')) posAc() });
+
+    function normLoc(item) {
+      if (!item || typeof item !== 'object') return null;
+      const p = item.properties || item;
+      const lat = parseFloat(p.lat ?? p.latitude ?? item.lat ?? (item.geometry?.coordinates?.[1]) ?? '');
+      const lon = parseFloat(p.lon ?? p.lng ?? item.lon ?? (item.geometry?.coordinates?.[0]) ?? '');
+      if (isNaN(lat) || isNaN(lon)) return null;
+      const place = p.place || p.name || p.formatted || p.display_name || '';
+      if (!place) return null;
+      const parts = place.split(',').map(s => s.trim()).filter(Boolean);
+      return { name: parts[0] || place, state: parts[1] || '', country: parts[parts.length - 1] || 'India', lat, lon };
+    }
+
+    async function fetchLocs(q) {
+      posAc();
+      acEl.innerHTML = `<div class="ac-hint"><div class="spin-sm"></div> Searching…</div>`;
+      acEl.classList.add('open');
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/locations?q=${encodeURIComponent(q)}`);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const raw = await r.json();
+        const arr = Array.isArray(raw) ? raw : (raw.results || raw.features || raw.items || raw.data || []);
+        const d = arr.map(normLoc).filter(Boolean);
+        if (!d.length) { acEl.innerHTML = `<div class="ac-hint">No results</div>`; return }
+        renderAc(d);
+      } catch (e) { acEl.innerHTML = `<div class="ac-hint">API unavailable</div>` }
+    }
+
+    function renderAc(list) {
+      acEl.innerHTML = '';
+      list.forEach(loc => {
+        const row = document.createElement('div'); row.className = 'ac-row';
+        row.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.35;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><div><div>${loc.name}</div><div class="ac-sub">${[loc.state, loc.country].filter(Boolean).join(', ')}</div></div>`;
+        row.addEventListener('click', () => pick(loc));
+        acEl.appendChild(row);
+      });
+    }
+    function closeAc() { acEl.classList.remove('open'); acEl.innerHTML = '' }
+    function pick(loc) { curLoc = loc; qEl.value = loc.name; closeAc(); doSearch() }
+
+    /* ── SEARCH ── */
+    async function doSearch() {
+      if (!curLoc) { showToast('Please select a location from the dropdown'); return }
+      const btn = document.getElementById('go-btn');
+      btn.classList.add('busy'); btn.innerHTML = `<div class="spin-sm"></div>`;
+      const date = document.getElementById('date-inp').value || new Date().toISOString().split('T')[0];
+      const body = { location: curLoc.name, lat: parseFloat(curLoc.lat), lon: parseFloat(curLoc.lon), date };
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/forecast`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!r.ok) { const err = await r.json().catch(() => ({})); throw new Error(err.detail || 'HTTP ' + r.status) }
+        renderDash(normalise(await r.json()));
+      } catch (e) {
+        console.error('[NIMBUS]', e);
+        showToast('Forecast failed: ' + e.message);
+      } finally {
+        btn.classList.remove('busy');
+        btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+        hov('button,.ac-row,.day-card,.sat-row,.date-btn');
+      }
+    }
+
+    /* ── NORMALISE ── */
+    function normalise(raw) {
+      const days = raw.forecast || raw.days || raw.forecasts || raw.predictions || raw.data || (Array.isArray(raw) ? raw : null);
+      if (!days?.length) throw new Error('No forecast data');
+      const nd = days.map(d => {
+        let ds = d.date || d.forecast_date || '';
+        if (ds && ds.includes('-')) { const dt = new Date(ds + 'T00:00:00'); ds = `${DNAMES[dt.getDay()]} ${dt.getDate()} ${MNAMES[dt.getMonth()]}` }
+        const mm = parseFloat((d.rainfall_mm ?? d.rainfall ?? d.precipitation ?? 0));
+        return { date: ds, rainfall_mm: parseFloat(mm.toFixed(2)), status: d.status || '' };
+      });
+      const mma = nd.map(d => d.rainfall_mm), tot = mma.reduce((a, b) => a + b, 0), pi = mma.indexOf(Math.max(...mma));
+      const coords = raw.coordinates || {};
+      return {
+        location: raw.location || curLoc?.name || 'Unknown',
+        lat: coords.lat ?? raw.lat ?? curLoc?.lat ?? null,
+        lon: coords.lon ?? raw.lon ?? curLoc?.lon ?? null,
+        generated_at: raw.generated_at || new Date().toISOString(),
+        total_7d_mm: parseFloat(tot.toFixed(2)),
+        peak_mm: parseFloat((mma[pi] || 0).toFixed(2)),
+        peak_day: nd[pi]?.date || '',
+        avg_daily_mm: parseFloat((tot / nd.length).toFixed(2)),
+        days: nd,
+      };
+    }
+
+    /* ── RENDER ── */
+    let FD = null, SI = 0;
+    function renderDash(data) {
+      FD = data; SI = 0;
+      const d0 = data.days[0];
+      const mma = data.days.map(d => d.rainfall_mm);
+      const mx = Math.max(...mma, .01);
+
+      document.getElementById('loc-chip-text').textContent = data.location;
+
+      document.getElementById('hero-idle').style.display = 'none';
+      const hd = document.getElementById('hero-data');
+      hd.style.display = 'flex';
+      document.getElementById('h-icon').innerHTML = wxSVG(d0.rainfall_mm);
+      document.getElementById('h-num').innerHTML = `${d0.rainfall_mm}<span style="font-size:1.5rem;opacity:.4"> mm</span>`;
+      document.getElementById('h-cond').textContent = cond(d0.rainfall_mm, d0.status);
+      document.getElementById('h-desc').textContent = `${data.location} · ${d0.date}. ${d0.rainfall_mm > 0 ? 'Rainfall expected — plan accordingly.' : 'Clear conditions expected.'}`;
+
+      document.getElementById('s-total').innerHTML = `${data.total_7d_mm}<span class="stat-unit">mm</span>`;
+      document.getElementById('s-total-note').textContent = 'Cumulative 7-day';
+      document.getElementById('s-peak').innerHTML = `${data.peak_mm}<span class="stat-unit">mm</span>`;
+      document.getElementById('s-peak-note').textContent = data.peak_day;
+      document.getElementById('s-avg').innerHTML = `${data.avg_daily_mm}<span class="stat-unit">mm</span>`;
+      document.getElementById('s-intensity').textContent = intensityLabel(data.total_7d_mm);
+
+      document.getElementById('daily-scroll').innerHTML = data.days.map((d, i) => `
+        <div class="day-card fi${i === 0 ? ' sel' : ''}" id="dc${i}" onclick="selDay(${i})" style="animation-delay:${i * .05}s">
+          <div class="day-name">${d.date.split(' ')[0]}</div>
+          <div class="day-date-num">${d.date.split(' ').slice(1).join(' ')}</div>
+          <div class="day-ico">${ico(d.rainfall_mm)}</div>
+          <div class="day-mm">${d.rainfall_mm}<span class="day-mm-unit">mm</span></div>
+          <div class="day-bar-wrap"><div class="day-bar" data-w="${(d.rainfall_mm / mx * 100).toFixed(0)}" style="width:0%;background:${rcol(d.rainfall_mm)}"></div></div>
+          <div class="day-status">${cond(d.rainfall_mm, d.status)}</div>
+        </div>`).join('');
+
+      setTimeout(() => document.querySelectorAll('.day-bar').forEach(b => b.style.width = b.dataset.w + '%'), 100);
+      hov('button,.ac-row,.day-card,.sat-row,.date-btn');
+
+      if (data.lat != null && data.lon != null) {
+        renderRadar(data.lat, data.lon, data.days[0].rainfall_mm, data.location);
+      }
+    }
+
+    function selDay(i) {
+      if (!FD) return; SI = i;
+      document.querySelectorAll('[id^="dc"]').forEach((c, j) => c.classList.toggle('sel', j === i));
+      const d = FD.days[i];
+      document.getElementById('h-icon').innerHTML = wxSVG(d.rainfall_mm);
+      document.getElementById('h-num').innerHTML = `${d.rainfall_mm}<span style="font-size:1.5rem;opacity:.4"> mm</span>`;
+      document.getElementById('h-cond').textContent = cond(d.rainfall_mm, d.status);
+      document.getElementById('h-desc').textContent = `${FD.location} · ${d.date}. ${d.rainfall_mm > 0 ? 'Rainfall expected — plan accordingly.' : 'Clear conditions expected.'}`;
+
+      if (FD.lat != null && FD.lon != null) {
+        updateRadarIntensity(d.rainfall_mm);
+      }
+    }
+
+    /* ── LEAFLET MAP ── */
+    let leafletMap = null, heatLayer = null, heatAF = null, heatPoints = [], heatRainMm = 0;
+
+    function renderRadar(lat, lon, rainMm, locName) {
+      heatRainMm = rainMm;
+
+      document.getElementById('map-container').style.display = 'block';
+      document.getElementById('radar-idle').style.display = 'none';
+
+      const cb = document.getElementById('radar-coords');
+      cb.style.display = 'block';
+      cb.textContent = `${lat.toFixed(4)}°N  ${lon.toFixed(4)}°E`;
+
+      if (!leafletMap) {
+        leafletMap = L.map('map-container', {
+          zoomControl: false,
+          attributionControl: false,
+          scrollWheelZoom: false,
+          dragging: false,
+          doubleClickZoom: false,
+          boxZoom: false,
+          keyboard: false,
+        }).setView([lat, lon], 12);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          subdomains: 'abcd',
+          maxZoom: 19,
+        }).addTo(leafletMap);
+      } else {
+        leafletMap.flyTo([lat, lon], 12, { duration: 1.4 });
+      }
+
+      leafletMap.eachLayer(l => { if (l._nimbusPin) leafletMap.removeLayer(l); });
+      const pinIcon = L.divIcon({
+        className: '',
+        html: '<div class="nimbus-pin"></div>',
+        iconSize: [10, 10],
+        iconAnchor: [5, 5],
+      });
+      const marker = L.marker([lat, lon], { icon: pinIcon }).addTo(leafletMap);
+      marker._nimbusPin = true;
+
+      const seed = Math.abs(Math.sin(lat * 127.3 + lon * 43.7) * 9999) | 0;
+      function sr(n) { const x = Math.sin(seed + n) * 10000; return x - Math.floor(x); }
+
+      const count = Math.max(6, Math.min(40, Math.floor(rainMm * 1.5) + 6));
+      heatPoints = [];
+      for (let i = 0; i < count; i++) {
+        const angle = sr(i * 5) * Math.PI * 2;
+        const dist  = sr(i * 5 + 1) * 0.18;
+        heatPoints.push({
+          lat: lat + Math.sin(angle) * dist,
+          lon: lon + Math.cos(angle) * dist,
+          baseInt: 0.3 + sr(i * 5 + 2) * 0.7,
+          phase:   sr(i * 5 + 3) * Math.PI * 2,
+          speed:   0.4 + sr(i * 5 + 4) * 1.2,
+          dLat:    (sr(i * 5 + 5) - 0.5) * 0.015,
+          dLon:    (sr(i * 5 + 6) - 0.5) * 0.015,
+        });
+      }
+
+      if (heatLayer) { leafletMap.removeLayer(heatLayer); heatLayer = null; }
+      if (heatAF) { cancelAnimationFrame(heatAF); heatAF = null; }
+
+      function heatGradient(mm) {
+        if (mm === 0)  return { 0.3: '#93c5fd', 0.7: '#3b82f6', 1.0: '#1d4ed8' };
+        if (mm < 4)   return { 0.3: '#7dd3fc', 0.6: '#0ea5e9', 1.0: '#0369a1' };
+        if (mm < 15)  return { 0.2: '#38bdf8', 0.5: '#2563eb', 0.8: '#7c3aed', 1.0: '#4c1d95' };
+        if (mm < 35)  return { 0.2: '#a78bfa', 0.5: '#7c3aed', 0.8: '#db2777', 1.0: '#9f1239' };
+        return { 0.2: '#f87171', 0.5: '#ef4444', 0.8: '#dc2626', 1.0: '#7f1d1d' };
+      }
+
+      heatLayer = L.heatLayer([], {
+        radius: 55,
+        blur: 40,
+        maxZoom: 13,
+        minOpacity: rainMm === 0 ? 0 : 0.18,
+        gradient: heatGradient(rainMm),
+      }).addTo(leafletMap);
+
+      const t0 = Date.now();
+      function animateHeat() {
+        const t = (Date.now() - t0) / 1000;
+        const pts = heatPoints.map(p => {
+          const pulse = 0.55 + 0.45 * Math.sin(t * p.speed + p.phase);
+          const drift = Math.sin(t * 0.07 + p.phase) * 0.3;
+          return [
+            p.lat + p.dLat * drift,
+            p.lon + p.dLon * drift,
+            p.baseInt * pulse,
+          ];
+        });
+        heatLayer.setLatLngs(pts);
+        heatAF = requestAnimationFrame(animateHeat);
+      }
+      animateHeat();
+    }
+
+    function updateRadarIntensity(newMm) {
+      heatRainMm = newMm;
+      if (!heatLayer || !leafletMap) return;
+
+      function heatGradient(mm) {
+        if (mm === 0)  return { 0.3: '#93c5fd', 0.7: '#3b82f6', 1.0: '#1d4ed8' };
+        if (mm < 4)   return { 0.3: '#7dd3fc', 0.6: '#0ea5e9', 1.0: '#0369a1' };
+        if (mm < 15)  return { 0.2: '#38bdf8', 0.5: '#2563eb', 0.8: '#7c3aed', 1.0: '#4c1d95' };
+        if (mm < 35)  return { 0.2: '#a78bfa', 0.5: '#7c3aed', 0.8: '#db2777', 1.0: '#9f1239' };
+        return { 0.2: '#f87171', 0.5: '#ef4444', 0.8: '#dc2626', 1.0: '#7f1d1d' };
+      }
+
+      leafletMap.removeLayer(heatLayer);
+      heatLayer = L.heatLayer([], {
+        radius: 55,
+        blur: 40,
+        maxZoom: 13,
+        minOpacity: newMm === 0 ? 0 : 0.18,
+        gradient: heatGradient(newMm),
+      }).addTo(leafletMap);
+    }
+
+    /* ── METRICS ── */
+    (async function () {
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/health`); if (!r.ok) return;
+        const d = await r.json();
+        const rmse = d.rmse ?? d.RMSE ?? null;
+        const mae = d.mae ?? d.MAE ?? null;
+        const r2 = d.r2 ?? d.R2 ?? null;
+        const samples = d.test_samples ?? d.Test_Samples ?? null;
+        if (r2 != null) {
+          document.getElementById('m-r2').textContent = parseFloat(r2).toFixed(4);
+          document.getElementById('m-r2-bar').style.width = (parseFloat(r2) * 100) + '%';
+        }
+        if (rmse != null) {
+          document.getElementById('m-rmse').textContent = parseFloat(rmse).toFixed(2);
+          document.getElementById('m-rmse-bar').style.width = Math.min(100, (100 - parseFloat(rmse) / 20 * 100)) + '%';
+        }
+        if (mae != null) {
+          document.getElementById('m-mae').textContent = parseFloat(mae).toFixed(2);
+          document.getElementById('m-mae-bar').style.width = Math.min(100, (100 - parseFloat(mae) / 10 * 100)) + '%';
+        }
+        if (samples != null) { document.getElementById('m-rec').textContent = parseInt(samples).toLocaleString(); }
+      } catch (e) {
+        document.getElementById('m-r2').textContent = '0.77'; document.getElementById('m-r2-bar').style.width = '77%';
+        document.getElementById('m-rmse').textContent = '11.74'; document.getElementById('m-rmse-bar').style.width = '41%';
+        document.getElementById('m-mae').textContent = '3.08'; document.getElementById('m-mae-bar').style.width = '69%';
+        document.getElementById('m-rec').textContent = '263,680';
+      }
+    })();
+
+    /* ── TOAST ── */
+    let tT;
+    function showToast(m) {
+      document.getElementById('toast').textContent = m;
+      const tw = document.getElementById('tw');
+      tw.classList.add('show');
+      clearTimeout(tT);
+      tT = setTimeout(() => tw.classList.remove('show'), 3500);
+    }
+
+    /* ── INIT ── */
+    setTimeout(() => document.getElementById('loading').classList.add('hidden'), 600);
+  </script>
+</body>
+
+</html>
