@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.core.dependencies import (get_model,get_scaler,get_feature_columns,get_grid_df)
+from backend.core.dependencies import (get_model, get_scaler, get_feature_columns, get_grid_df, get_metrics)
 
 router = APIRouter(tags=["Health"])
 
@@ -9,6 +9,7 @@ def health_check():
     scaler_loaded = get_scaler() is not None
     features_loaded = get_feature_columns() is not None
     grid_loaded = get_grid_df() is not None
+    metrics = get_metrics() or {}
 
     return {
         "status": "ok",
@@ -16,4 +17,8 @@ def health_check():
         "scaler_loaded": scaler_loaded,
         "features_loaded": features_loaded,
         "grid_loaded": grid_loaded,
+        "rmse": metrics.get("RMSE"),
+        "mae": metrics.get("MAE"),
+        "r2": metrics.get("R2"),
+        "test_samples": metrics.get("Test_Samples"),
     }
