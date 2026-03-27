@@ -30,7 +30,7 @@
 
 <br/>
 
-![UI Screenshot](docs/screenshot.png)
+![UI Screenshot](docs/frontend.png)
 
 ---
 
