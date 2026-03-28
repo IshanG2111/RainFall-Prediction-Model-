@@ -109,7 +109,6 @@ RainFall-Prediction-Model--IG/
 │   │   ├── dependencies.py # Singleton resources: model, scaler, grid, master dataset
 │   │   └── rate_limiter.py # Shared slowapi rate-limiter instance
 │   ├── routes/
-│   │   ├── frontend.py     # GET /  → serves index.html
 │   │   ├── health.py       # GET /api/v1/health
 │   │   ├── locations.py    # GET /api/v1/locations?q=<query>
 │   │   └── forecast.py     # POST /api/v1/forecast
