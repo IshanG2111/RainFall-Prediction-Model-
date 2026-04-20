@@ -21,7 +21,7 @@ This roadmap outlines a robust, phase-wise approach for a 40–50 mark, 2-credit
 
 | Product | Name              | Freq.       | Role                                   |
 |---------|-------------------|-------------|----------------------------------------|
-| IMC     | 3RIMG_L2B_IMC     | Half-hourly | 🎯 Target Y (Rainfall, daily total)    |
+| IMC     | 3RIMG_L2B_IMC     | Half-hourly | Target Y (Rainfall, daily total)       |
 | HEM     | 3RIMG_L3B_HEM_DLY | Daily       | Optional feature/benchmark target      |
 | WDP     | 3RIMG_L2G_WDP     | Half-hourly | Wind, shear, vorticity, divergence (X) |
 | UTH     | 3RIMG_L3B_UTH_DLY | Daily       | Humidity (X)                           |
