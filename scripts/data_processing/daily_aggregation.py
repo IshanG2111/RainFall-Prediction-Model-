@@ -8,50 +8,53 @@ from scripts.features.uth_daily import process_uth_daily
 from scripts.features.olr_daily import process_olr_daily
 from scripts.features.hem_daily import process_hem_daily
 
+def build_file_index(raw_dir, feature):
+    import glob
+    import os
+
+    files = glob.glob(f"{raw_dir}/{feature}/*.h5")
+
+    file_map = {}
+
+    for fp in files:
+        fname = os.path.basename(fp)
+        date = fname[6:15]
+
+        file_map.setdefault(date, []).append(fp)
+
+    return file_map
+
 def run_daily_aggregation(phase_name: str):
     if phase_name not in PHASE_CONFIG:
         raise ValueError(f"Phase '{phase_name}' not found in PHASE_CONFIG")
 
     cfg = PHASE_CONFIG[phase_name]
-
     dates = cfg["dates"]
 
-    # Load grid once
+    features = ["imc", "hem", "wdp", "cmp", "uth", "lst", "olr"]
+
     grid_df = load_grid_definition()
+
+    file_maps = {}
+
+    for feature in features:
+        print(f"Building file index for {feature}...")
+        file_maps[feature] = build_file_index(cfg["raw_base_dir"], feature)
 
     print(f"\nStarting DAILY AGGREGATION for phase: {phase_name}")
     print(f"Total days: {len(dates)}")
 
     for d in dates:
-        print(f"Processing date: {d}")
-
-        process_imc_daily(d, cfg, grid_df)
-        process_wdp_daily(d, cfg, grid_df)
-        process_lst_daily(d, cfg, grid_df)
-        process_cmp_daily(d, cfg, grid_df)
+        print(f"\nProcessing date: {d}")
+        process_imc_daily(d, cfg, grid_df, file_maps["imc"])
+        process_wdp_daily(d, cfg, grid_df, file_maps["wdp"])
+        process_lst_daily(d, cfg, grid_df, file_maps["lst"])
+        process_cmp_daily(d, cfg, grid_df, file_maps["cmp"])
         process_uth_daily(d, cfg, grid_df)
         process_olr_daily(d, cfg, grid_df)
         process_hem_daily(d, cfg, grid_df)
 
     print("\nAll daily aggregation tasks completed successfully!")
 
-
 if __name__ == "__main__":
-    while True:
-        print("\nDAILY AGGREGATION MENU")
-        print("1. Run 2_days pipeline")
-        print("2. Run 8_days pipeline")
-        print("3. Run 3_months pipeline")
-        print("4. Exit")
-        choice = input("Enter your choice (1-4): ").strip()
-        if choice == "1":
-            run_daily_aggregation("2_days")
-        elif choice == "2":
-            run_daily_aggregation("8_days")
-        elif choice == "3":
-            run_daily_aggregation("3_months")
-        elif choice == "4":
-            print("Exiting pipeline.")
-            break
-        else:
-            print("Invalid choice. Please try again.")
+    run_daily_aggregation("3_years")

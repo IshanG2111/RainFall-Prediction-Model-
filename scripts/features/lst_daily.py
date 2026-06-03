@@ -2,77 +2,72 @@ import glob
 import h5py
 import numpy as np
 from datetime import datetime
-import pandas as pd
+from multiprocessing import Pool, cpu_count
 from scripts.helper.aggregation_helper import (build_latlon_from_attrs,clip_to_india,map_to_grid,save_daily)
 
-def aggregate_lst(grid_id, values, date, grid_df):
-    df = pd.DataFrame({"grid_id": grid_id,"lst_k": values})
+def _lst_worker(args):
+    idx, fp = args
 
-    out = df.groupby("grid_id")["lst_k"].mean().reset_index()
+    with h5py.File(fp, "r") as h:
+        arr = h["LST"][0].astype(float)
+        arr[arr == -999] = np.nan
 
-    full_grid = grid_df[["grid_id", "lat_center", "lon_center"]].copy()
-    full_grid["date"] = date
+    return idx, arr
 
-    out = full_grid.merge(out, on="grid_id", how="left")
-    return out
-
-
-def process_lst_daily(date_str, cfg, grid_df):
+def process_lst_daily(date_str, cfg, grid_df, file_map):
     raw_dir = cfg["raw_base_dir"]
     processed_dir = cfg["processed_base_dir"]
 
-    pattern = f"{raw_dir}/lst/*{date_str}*_L2B_LST_*.h5"
-    files = sorted(glob.glob(pattern))
+    files = sorted(file_map.get(date_str, []))
 
     if not files:
         print(f"No LST files found for {date_str}")
         return None
 
+    with h5py.File(files[0], "r") as h:
+        H, W = h["LST"][0].shape
+        lat2d, lon2d = build_latlon_from_attrs(h, H, W)
+
+    indexed_files = list(enumerate(files))
+
+    with Pool(min(8, cpu_count())) as pool:
+        results = pool.map(_lst_worker, indexed_files)
+
+    results.sort(key=lambda x: x[0])
+
     sum_acc = None
     count_acc = None
-    lat2d = lon2d = None
 
-    for fp in files:
-        with h5py.File(fp, "r") as h:
+    for _, arr in results:
+        if np.all(np.isnan(arr)):
+            continue
 
-            arr = h["LST"][0].astype(float)
+        if sum_acc is None:
+            sum_acc = np.zeros_like(arr)
+            count_acc = np.zeros_like(arr, dtype=np.int32)
 
-            # Replace fill values with NaN
-            arr[arr == -999] = np.nan
-
-            # Skip completely invalid frames
-            if np.all(np.isnan(arr)):
-                continue
-
-            H, W = arr.shape
-
-            # Build lat/lon grid once
-            if lat2d is None:
-                lat2d, lon2d = build_latlon_from_attrs(h, H, W)
-
-            # Initialize accumulators
-            if sum_acc is None:
-                sum_acc = np.zeros_like(arr, dtype=float)
-                count_acc = np.zeros_like(arr, dtype=np.int32)
-
-            valid_mask = ~np.isnan(arr)
-            sum_acc[valid_mask] += arr[valid_mask]
-            count_acc[valid_mask] += 1
+        mask = ~np.isnan(arr)
+        sum_acc[mask] += arr[mask]
+        count_acc[mask] += 1
 
     if sum_acc is None:
-        print(f"No valid LST data found for {date_str}")
         return None
 
-    # Pixel-wise daily mean
-    daily_lst = np.full_like(sum_acc, np.nan, dtype=float)
-    valid_pixels = count_acc > 0
-    daily_lst[valid_pixels] = sum_acc[valid_pixels] / count_acc[valid_pixels]
+    daily_lst = np.full_like(sum_acc, np.nan)
+    valid = count_acc > 0
+    daily_lst[valid] = sum_acc[valid] / count_acc[valid]
 
-    # Clip to India
     lat_i, lon_i, lst_i = clip_to_india(lat2d, lon2d, daily_lst)
     grid_id = map_to_grid(lat_i, lon_i)
 
+    import pandas as pd
+    df = pd.DataFrame({"grid_id": grid_id, "lst_k": lst_i})
+    out = df.groupby("grid_id").mean().reset_index()
+
+    full = grid_df[["grid_id", "lat_center", "lon_center"]].copy()
     date = datetime.strptime(date_str, "%d%b%Y").date()
-    out = aggregate_lst(grid_id, lst_i, date, grid_df)
+    full["date"] = date
+
+    out = full.merge(out, on="grid_id", how="left")
 
     return save_daily(out, "lst", date, processed_dir)

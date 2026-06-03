@@ -23,26 +23,39 @@ def build_latlon_from_attrs(h, H, W):
 
     return lat2d, lon2d
 
-
 def clip_to_india(lat2d, lon2d, data):
-    mask = ((lat2d >= LAT_MIN) & (lat2d <= LAT_MAX) & (lon2d >= LON_MIN) & (lon2d <= LON_MAX))
+    mask = ((lat2d >= LAT_MIN) & (lat2d <= LAT_MAX) &(lon2d >= LON_MIN) & (lon2d <= LON_MAX))
     return lat2d[mask], lon2d[mask], data[mask]
-
 
 def map_to_grid(lat_i, lon_i):
     row = np.clip(((lat_i - LAT_MIN) / GRID_STEP).astype(int), 0, NUM_ROWS - 1)
     col = np.clip(((lon_i - LON_MIN) / GRID_STEP).astype(int), 0, NUM_COLS - 1)
-    return row * NUM_COLS + col + 1
+    return row * NUM_COLS + col + 1  # 1-based indexing
+
+def _fast_aggregate(grid_id, values, num_grids):
+    sum_arr = np.zeros(num_grids, dtype=float)
+    count_arr = np.zeros(num_grids, dtype=np.int32)
+
+    # accumulate
+    np.add.at(sum_arr, grid_id - 1, values)
+    np.add.at(count_arr, grid_id - 1, 1)
+
+    # compute mean safely (preserve NaN for empty grids)
+    mean_arr = np.divide(sum_arr,count_arr,out=np.full(num_grids, np.nan, dtype=float),where=count_arr != 0)
+
+    return mean_arr
 
 def aggregate_and_fix_missing(grid_id, values, date, grid_df):
-    df = pd.DataFrame({"grid_id": grid_id,"value": values})
+    num_grids = len(grid_df)
 
-    out = df.groupby("grid_id")["value"].mean().reset_index()
+    # Fast aggregation
+    mean_arr = _fast_aggregate(grid_id, values, num_grids)
 
-    full_grid = grid_df[["grid_id", "lat_center", "lon_center"]].copy()
-    full_grid["date"] = date
+    # Build output directly (no merge needed)
+    out = grid_df[["grid_id", "lat_center", "lon_center"]].copy()
+    out["date"] = date
+    out["value"] = mean_arr
 
-    out = full_grid.merge(out, on="grid_id", how="left")
     return out
 
 def save_daily(out_df, prefix, date, processed_base_dir):
@@ -50,7 +63,9 @@ def save_daily(out_df, prefix, date, processed_base_dir):
     os.makedirs(save_dir, exist_ok=True)
 
     outpath = os.path.join(save_dir, f"{prefix}_{date}.parquet")
-    out_df.to_parquet(outpath, index=False)
+
+    # faster + compressed
+    out_df.to_parquet(outpath, index=False, engine="pyarrow", compression="snappy")
 
     print(f"Saved {prefix.upper()} → {outpath}")
     return out_df
