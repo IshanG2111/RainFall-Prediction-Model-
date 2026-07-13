@@ -31,7 +31,7 @@ def run_daily_aggregation(phase_name: str):
     cfg = PHASE_CONFIG[phase_name]
     dates = cfg["dates"]
 
-    features = ["hem", "wdp", "cmp", "uth", "lst", "olr"]
+    features = ["imc","wdp","lst","cmp","uth","olr","hem"]
 
     grid_df = load_grid_definition()
 
@@ -46,7 +46,7 @@ def run_daily_aggregation(phase_name: str):
 
     for d in dates:
         print(f"\nProcessing date: {d}")
-        # process_imc_daily(d, cfg, grid_df, file_maps["imc"])
+        process_imc_daily(d, cfg, grid_df, file_maps["imc"])
         process_wdp_daily(d, cfg, grid_df, file_maps["wdp"])
         process_lst_daily(d, cfg, grid_df, file_maps["lst"])
         process_cmp_daily(d, cfg, grid_df, file_maps["cmp"])
